@@ -5,90 +5,123 @@ import { verifyToken } from "@/lib/auth";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const search = searchParams.get("search") || "";
-  const location = searchParams.get("location") || "";
-  const datePosted = searchParams.get("datePosted") || "";
-  const quantity = searchParams.get("quantity") || "";
-  const expiryDate = searchParams.get("expiryDate") || "";
-  const postedBy = searchParams.get("postedBy") || "";
+  const listingId = searchParams.get("id");
 
-  try {
-    const { db } = await connectToDatabase();
+  if (listingId) {
+    // Fetch a single listing
+    try {
+      const { db } = await connectToDatabase();
+      const listing = await db
+        .collection("foodlistings")
+        .findOne({ _id: new ObjectId(listingId) });
 
-    const query: any = {
-      expiration: { $gt: new Date() } // Only show non-expired listings
-    };
+      if (!listing) {
+        return NextResponse.json({ error: "Listing not found" }, { status: 404 });
+      }
 
-    if (search) {
-      query.$or = [
-        { foodType: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } },
-      ];
+      const formattedListing = {
+        ...listing,
+        _id: listing._id.toString(),
+        postedBy: listing.postedBy.toString(),
+        expiration: listing.expiration.toISOString(),
+        createdAt: listing.createdAt.toISOString(),
+        updatedAt: listing.updatedAt.toISOString(),
+      };
+
+      return NextResponse.json(formattedListing);
+    } catch (error) {
+      console.error("Error fetching listing:", error);
+      return NextResponse.json(
+        { error: "An unexpected error occurred" },
+        { status: 500 }
+      );
     }
+  } else {
+    // Fetch all listings (existing code)
+    const search = searchParams.get("search") || "";
+    const location = searchParams.get("location") || "";
+    const datePosted = searchParams.get("datePosted") || "";
+    const quantity = searchParams.get("quantity") || "";
+    const expiryDate = searchParams.get("expiryDate") || "";
+    const postedBy = searchParams.get("postedBy") || "";
 
-    if (location) {
-      query.location = { $regex: location, $options: "i" };
-    }
+    try {
+      const { db } = await connectToDatabase();
 
-    if (datePosted) {
-      query.createdAt = { $gte: new Date(datePosted) };
-    }
+      const query: any = {
+        expiration: { $gt: new Date() } // Only show non-expired listings
+      };
 
-    if (quantity) {
-      query.quantity = { $regex: quantity, $options: "i" };
-    }
+      if (search) {
+        query.$or = [
+          { foodType: { $regex: search, $options: "i" } },
+          { description: { $regex: search, $options: "i" } },
+        ];
+      }
 
-    if (expiryDate) {
-      query.expiration = { $lte: new Date(expiryDate), $gt: new Date() };
-    }
+      if (location) {
+        query.location = { $regex: location, $options: "i" };
+      }
 
-    if (postedBy) {
-      query.postedBy = new ObjectId(postedBy);
-    }
+      if (datePosted) {
+        query.createdAt = { $gte: new Date(datePosted) };
+      }
 
-    const listings = await db
-      .collection("foodlistings")
-      .aggregate([
-        { $match: query },
-        {
-          $lookup: {
-            from: "users",
-            localField: "postedBy",
-            foreignField: "_id",
-            as: "userDetails",
+      if (quantity) {
+        query.quantity = { $regex: quantity, $options: "i" };
+      }
+
+      if (expiryDate) {
+        query.expiration = { $lte: new Date(expiryDate), $gt: new Date() };
+      }
+
+      if (postedBy) {
+        query.postedBy = new ObjectId(postedBy);
+      }
+
+      const listings = await db
+        .collection("foodlistings")
+        .aggregate([
+          { $match: query },
+          {
+            $lookup: {
+              from: "users",
+              localField: "postedBy",
+              foreignField: "_id",
+              as: "userDetails",
+            },
           },
-        },
-        {
-          $project: {
-            foodType: 1,
-            description: 1,
-            quantity: 1,
-            expiration: 1,
-            location: 1,
-            createdAt: 1,
-            updatedAt: 1,
-            postedBy: { $arrayElemAt: ["$userDetails.name", 0] },
+          {
+            $project: {
+              foodType: 1,
+              description: 1,
+              quantity: 1,
+              expiration: 1,
+              location: 1,
+              createdAt: 1,
+              updatedAt: 1,
+              postedBy: { $arrayElemAt: ["$userDetails.name", 0] },
+            },
           },
-        },
-      ])
-      .toArray();
+        ])
+        .toArray();
 
-    // Convert MongoDB dates to ISO strings for JSON serialization
-    const formattedListings = listings.map((listing) => ({
-      ...listing,
-      _id: listing._id.toString(),
-      expiration: listing.expiration.toISOString(),
-      createdAt: listing.createdAt.toISOString(),
-      updatedAt: listing.updatedAt.toISOString(),
-    }));
+      const formattedListings = listings.map((listing) => ({
+        ...listing,
+        _id: listing._id.toString(),
+        expiration: listing.expiration.toISOString(),
+        createdAt: listing.createdAt.toISOString(),
+        updatedAt: listing.updatedAt.toISOString(),
+      }));
 
-    return NextResponse.json(formattedListings);
-  } catch (error) {
-    console.error("Error fetching listings:", error);
-    return NextResponse.json(
-      { error: "An unexpected error occurred" },
-      { status: 500 }
-    );
+      return NextResponse.json(formattedListings);
+    } catch (error) {
+      console.error("Error fetching listings:", error);
+      return NextResponse.json(
+        { error: "An unexpected error occurred" },
+        { status: 500 }
+      );
+    }
   }
 }
 

@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 interface DecodedToken {
   id: string;
   email: string;
+  name: string;
   // Add any other fields that are included in your JWT payload
 }
 
@@ -20,6 +21,13 @@ export async function getCurrentUser(): Promise<User | null> {
         Authorization: `Bearer ${token}`,
       },
     });
+
+    if (response.status === 401) {
+      // Token is expired or invalid
+      localStorage.removeItem("token");
+      window.location.href = "/login"; // Redirect to login page
+      return null;
+    }
 
     if (!response.ok) {
       throw new Error("Failed to fetch user data");
@@ -42,7 +50,7 @@ export async function updateUserEmail(
       "Content-Type": "application/json",
       Authorization: `Bearer ${localStorage.getItem("token")}`,
     },
-    body: JSON.stringify({ action: 'updateEmail', data: { email: newEmail } }),
+    body: JSON.stringify({ action: "updateEmail", data: { email: newEmail } }),
   });
 
   if (!response.ok) {
@@ -60,7 +68,10 @@ export async function updateUserPassword(
       "Content-Type": "application/json",
       Authorization: `Bearer ${localStorage.getItem("token")}`,
     },
-    body: JSON.stringify({ action: 'updatePassword', data: { password: newPassword } }),
+    body: JSON.stringify({
+      action: "updatePassword",
+      data: { password: newPassword },
+    }),
   });
 
   if (!response.ok) {
@@ -76,7 +87,11 @@ export async function verifyToken(token: string): Promise<DecodedToken | null> {
     ) as DecodedToken;
     return decoded;
   } catch (error) {
-    console.error("Error verifying token:", error);
+    if (error instanceof jwt.TokenExpiredError) {
+      console.error("Token expired:", error);
+    } else {
+      console.error("Error verifying token:", error);
+    }
     return null;
   }
 }

@@ -24,6 +24,8 @@ export interface Message {
   listingId: string;
   senderId: string;
   senderName: string;
+  recipientId: string;
+  recipientName: string;
   content: string;
   timestamp: string;
 }

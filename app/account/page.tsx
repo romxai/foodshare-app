@@ -1,12 +1,25 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { getCurrentUser, updateUserEmail, updateUserPassword } from "../../lib/auth";
+import React, { useState, useEffect } from "react";
+import {
+  getCurrentUser,
+  updateUserEmail,
+  updateUserPassword,
+} from "../../lib/auth";
 import { User } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import UserActivity from "@/components/UserActivity";
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 const AccountPage: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -154,7 +167,9 @@ const AccountPage: React.FC = () => {
           />
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmEmailUpdate}>Confirm</AlertDialogAction>
+            <AlertDialogAction onClick={confirmEmailUpdate}>
+              Confirm
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
