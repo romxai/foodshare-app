@@ -27,7 +27,26 @@ export async function GET(request: Request) {
     if (listingId) {
       messages = await db
         .collection("messages")
-        .find({ listingId: new ObjectId(listingId) })
+        .aggregate([
+          { $match: { listingId: new ObjectId(listingId) } },
+          {
+            $lookup: {
+              from: "users",
+              localField: "senderId",
+              foreignField: "_id",
+              as: "senderDetails",
+            },
+          },
+          {
+            $project: {
+              content: 1,
+              timestamp: 1,
+              senderId: 1,
+              recipientId: 1,
+              senderName: { $arrayElemAt: ["$senderDetails.name", 0] },
+            },
+          },
+        ])
         .sort({ timestamp: 1 })
         .toArray();
     } else if (type === "inbox") {
@@ -48,11 +67,11 @@ export async function GET(request: Request) {
 
     const formattedMessages = messages.map((message) => ({
       ...message,
-      id: message._id.toString(),
-      listingId: message.listingId.toString(),
-      senderId: message.senderId.toString(),
-      recipientId: message.recipientId.toString(),
-      timestamp: message.timestamp.toISOString(),
+      id: message._id ? message._id.toString() : '',
+      listingId: message.listingId ? message.listingId.toString() : '',
+      senderId: message.senderId ? message.senderId.toString() : '',
+      recipientId: message.recipientId ? message.recipientId.toString() : '',
+      timestamp: message.timestamp ? message.timestamp.toISOString() : new Date().toISOString(),
     }));
 
     return NextResponse.json(formattedMessages);
@@ -89,21 +108,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Listing not found" }, { status: 404 });
     }
 
-    // Prevent users from messaging themselves
-    if (listing.postedBy.toString() === user.id) {
+    if (listing.postedBy.toString() === user.id.toString()) {
       return NextResponse.json(
         { error: "You cannot message yourself" },
         { status: 400 }
       );
     }
 
-    // Fetch the sender's full user document
     const sender = await db.collection("users").findOne({ _id: new ObjectId(user.id) });
     if (!sender) {
       return NextResponse.json({ error: "Sender not found" }, { status: 404 });
     }
 
-    // Fetch the recipient's full user document
     const recipient = await db.collection("users").findOne({ _id: new ObjectId(listing.postedBy) });
     if (!recipient) {
       return NextResponse.json({ error: "Recipient not found" }, { status: 404 });
@@ -121,7 +137,6 @@ export async function POST(request: Request) {
 
     const result = await db.collection("messages").insertOne(newMessage);
 
-    // Return the created message
     return NextResponse.json({ 
       message: "Message sent successfully",
       id: result.insertedId.toString(),
