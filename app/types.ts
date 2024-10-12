@@ -21,7 +21,8 @@ export interface FoodListing {
   quantity: string;
   expiration: string;
   location: string;
-  postedBy: string; // This will now be the username
+  postedBy: string;
   createdAt: string;
   updatedAt: string;
+  __v: number;
 }

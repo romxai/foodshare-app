@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import CreateListingForm from "@/components/CreateListingForm";
 import { getCurrentUser } from "../lib/auth";
-import MessageSystem from './MessageSystem';
+import MessageSystem from "./MessageSystem";
 
 const FoodListings: React.FC = () => {
   const [listings, setListings] = useState<FoodListing[]>([]);
@@ -23,7 +23,9 @@ const FoodListings: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
-  const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
+  const [selectedListingId, setSelectedListingId] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -153,7 +155,10 @@ const FoodListings: React.FC = () => {
       )}
 
       {selectedListingId && (
-        <Dialog open={!!selectedListingId} onOpenChange={() => setSelectedListingId(null)}>
+        <Dialog
+          open={!!selectedListingId}
+          onOpenChange={() => setSelectedListingId(null)}
+        >
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Message Seller</DialogTitle>
