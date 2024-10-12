@@ -1,16 +1,11 @@
-import React, { Suspense } from 'react';
-import LoadingPage from './loading';
-import FoodListings from "./components/FoodListings";
+import React from 'react';
+import FoodListings from './components/FoodListings';
 
 const Home: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gray-100">
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Food Listings</h1>
-        <Suspense fallback={<LoadingPage />}>
-          <FoodListings />
-        </Suspense>
-      </main>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6">Food Listings</h1>
+      <FoodListings />
     </div>
   );
 };

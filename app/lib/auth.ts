@@ -1,4 +1,11 @@
 import { User } from '../types';
+import jwt from 'jsonwebtoken';
+
+interface DecodedToken {
+  id: string;
+  email: string;
+  // Add any other fields that are included in your JWT payload
+}
 
 export async function getCurrentUser(): Promise<User | null> {
   const token = localStorage.getItem('token');
@@ -59,5 +66,38 @@ export async function updateUserPassword(userId: string, newPassword: string): P
 
   if (!response.ok) {
     throw new Error('Failed to update password');
+  }
+}
+
+export async function verifyToken(token: string): Promise<DecodedToken | null> {
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as DecodedToken;
+    return decoded;
+  } catch (error) {
+    console.error('Error verifying token:', error);
+    return null;
+  }
+}
+
+export async function login(email: string, password: string): Promise<string | null> {
+  try {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Login failed');
+    }
+
+    const data = await response.json();
+    localStorage.setItem('token', data.token);
+    return data.token;
+  } catch (error) {
+    console.error('Error during login:', error);
+    return null;
   }
 }

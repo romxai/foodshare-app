@@ -13,3 +13,15 @@ export interface Activity {
 }
 
 // ... other types
+
+export interface FoodListing {
+  _id: string;
+  foodType: string;
+  description: string;
+  quantity: string;
+  source: string;
+  expiration: string;
+  location: string;
+  postedBy: string;
+  createdAt: string;
+}
