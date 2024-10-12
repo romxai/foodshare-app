@@ -5,15 +5,6 @@ export interface User {
   location: string;
 }
 
-export interface Activity {
-  id: string;
-  type: string;
-  description: string;
-  date: string;
-}
-
-// ... other types
-
 export interface FoodListing {
   _id: string;
   foodType: string;
@@ -21,7 +12,18 @@ export interface FoodListing {
   quantity: string;
   expiration: string;
   location: string;
-  postedBy: string; // This will now be the username
+  postedBy: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// ... other types
+
+export interface Message {
+  id: string;
+  listingId: string;
+  senderId: string;
+  senderName: string;
+  content: string;
+  timestamp: string;
 }

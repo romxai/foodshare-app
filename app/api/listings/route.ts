@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
-import { verifyToken } from "@/app/lib/auth";
+import { verifyToken } from "@/lib/auth";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -15,7 +15,9 @@ export async function GET(request: Request) {
   try {
     const { db } = await connectToDatabase();
 
-    const query: any = {};
+    const query: any = {
+      expiration: { $gt: new Date() } // Only show non-expired listings
+    };
 
     if (search) {
       query.$or = [
@@ -37,7 +39,7 @@ export async function GET(request: Request) {
     }
 
     if (expiryDate) {
-      query.expiration = { $lte: new Date(expiryDate) };
+      query.expiration = { $lte: new Date(expiryDate), $gt: new Date() };
     }
 
     if (postedBy) {
@@ -75,18 +77,9 @@ export async function GET(request: Request) {
     const formattedListings = listings.map((listing) => ({
       ...listing,
       _id: listing._id.toString(),
-      expiration:
-        listing.expiration instanceof Date
-          ? listing.expiration.toISOString()
-          : listing.expiration,
-      createdAt:
-        listing.createdAt instanceof Date
-          ? listing.createdAt.toISOString()
-          : listing.createdAt,
-      updatedAt:
-        listing.updatedAt instanceof Date
-          ? listing.updatedAt.toISOString()
-          : listing.updatedAt,
+      expiration: listing.expiration.toISOString(),
+      createdAt: listing.createdAt.toISOString(),
+      updatedAt: listing.updatedAt.toISOString(),
     }));
 
     return NextResponse.json(formattedListings);

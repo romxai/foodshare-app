@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { getCurrentUser } from "@/app/lib/auth";
+import { getCurrentUser } from "../lib/auth";
 
 interface CreateListingFormProps {
   onListingCreated: () => void;
@@ -18,7 +18,7 @@ export default function CreateListingForm({
     description: "",
     quantity: "",
     quantityType: "solid",
-    quantityUnit: "kg",
+    quantityUnit: "Kg",
     source: "",
     expirationDate: "",
     expirationTime: "00:00",
@@ -36,8 +36,8 @@ export default function CreateListingForm({
   const handleQuantityTypeChange = () => {
     setFormData((prev) => ({
       ...prev,
-      quantityType: prev.quantityType === "solid" ? "fluid" : "solid",
-      quantityUnit: prev.quantityType === "solid" ? "L" : "kg",
+      quantityType: prev.quantityType === "solid" ? "liquid" : "solid",
+      quantityUnit: prev.quantityType === "solid" ? "L" : "Kg",
     }));
   };
 
@@ -46,9 +46,9 @@ export default function CreateListingForm({
       ...prev,
       quantityUnit:
         prev.quantityType === "solid"
-          ? prev.quantityUnit === "kg"
+          ? prev.quantityUnit === "Kg"
             ? "g"
-            : "kg"
+            : "Kg"
           : prev.quantityUnit === "L"
           ? "ml"
           : "L",
@@ -99,7 +99,7 @@ export default function CreateListingForm({
         description: "",
         quantity: "",
         quantityType: "solid",
-        quantityUnit: "kg",
+        quantityUnit: "Kg",
         source: "",
         expirationDate: "",
         expirationTime: "00:00",
@@ -150,11 +150,11 @@ export default function CreateListingForm({
         </div>
         <div className="flex items-center space-x-2">
           <Label htmlFor="quantityType">
-            {formData.quantityType === "solid" ? "Solid" : "Fluid"}
+            {formData.quantityType === "solid" ? "Solid" : "Liquid"}
           </Label>
           <Switch
             id="quantityType"
-            checked={formData.quantityType === "fluid"}
+            checked={formData.quantityType === "liquid"}
             onCheckedChange={handleQuantityTypeChange}
           />
         </div>

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FoodListing } from "../types";
-import AdvancedSearchForm from "./AdvancedSearchForm";
+import AdvancedSearchForm from "@/components/AdvancedSearchForm";
 import {
   Dialog,
   DialogContent,
@@ -12,8 +12,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import CreateListingForm from "./CreateListingForm";
-import { getCurrentUser } from "@/app/lib/auth";
+import CreateListingForm from "@/components/CreateListingForm";
+import { getCurrentUser } from "../lib/auth";
+import MessageSystem from './MessageSystem';
 
 const FoodListings: React.FC = () => {
   const [listings, setListings] = useState<FoodListing[]>([]);
@@ -22,6 +23,7 @@ const FoodListings: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
+  const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -142,9 +144,23 @@ const FoodListings: React.FC = () => {
               <p>Location: {listing.location}</p>
               <p>Posted: {new Date(listing.createdAt).toLocaleString()}</p>
               <p>Posted By: {listing.postedBy}</p>
+              <Button onClick={() => setSelectedListingId(listing._id)}>
+                Contact Seller
+              </Button>
             </li>
           ))}
         </ul>
+      )}
+
+      {selectedListingId && (
+        <Dialog open={!!selectedListingId} onOpenChange={() => setSelectedListingId(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Message Seller</DialogTitle>
+            </DialogHeader>
+            <MessageSystem listingId={selectedListingId} />
+          </DialogContent>
+        </Dialog>
       )}
 
       {user && (
