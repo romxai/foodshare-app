@@ -3,6 +3,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { verifyToken } from "@/lib/auth";
 import { ObjectId } from "mongodb";
 
+// GET Endpoint: Fetch messages
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const listingId = searchParams.get("listingId");
@@ -17,7 +18,10 @@ export async function GET(request: Request) {
   const user = await verifyToken(token);
 
   if (!user) {
-    return NextResponse.json({ error: "Token expired or invalid" }, { status: 401 });
+    return NextResponse.json(
+      { error: "Token expired or invalid" },
+      { status: 401 }
+    );
   }
 
   try {
@@ -38,12 +42,21 @@ export async function GET(request: Request) {
             },
           },
           {
+            $lookup: {
+              from: "users",
+              localField: "recipientId",
+              foreignField: "_id",
+              as: "recipientDetails",
+            },
+          },
+          {
             $project: {
               content: 1,
               timestamp: 1,
               senderId: 1,
               recipientId: 1,
               senderName: { $arrayElemAt: ["$senderDetails.name", 0] },
+              recipientName: { $arrayElemAt: ["$recipientDetails.name", 0] },
             },
           },
         ])
@@ -67,11 +80,13 @@ export async function GET(request: Request) {
 
     const formattedMessages = messages.map((message) => ({
       ...message,
-      id: message._id ? message._id.toString() : '',
-      listingId: message.listingId ? message.listingId.toString() : '',
-      senderId: message.senderId ? message.senderId.toString() : '',
-      recipientId: message.recipientId ? message.recipientId.toString() : '',
-      timestamp: message.timestamp ? message.timestamp.toISOString() : new Date().toISOString(),
+      id: message._id ? message._id.toString() : "",
+      listingId: message.listingId ? message.listingId.toString() : "",
+      senderId: message.senderId ? message.senderId.toString() : "",
+      recipientId: message.recipientId ? message.recipientId.toString() : "",
+      timestamp: message.timestamp
+        ? message.timestamp.toISOString()
+        : new Date().toISOString(),
     }));
 
     return NextResponse.json(formattedMessages);
@@ -84,6 +99,7 @@ export async function GET(request: Request) {
   }
 }
 
+// POST Endpoint: Send a message
 export async function POST(request: Request) {
   const authHeader = request.headers.get("Authorization");
   if (!authHeader) {
@@ -94,7 +110,10 @@ export async function POST(request: Request) {
   const user = await verifyToken(token);
 
   if (!user) {
-    return NextResponse.json({ error: "Token expired or invalid" }, { status: 401 });
+    return NextResponse.json(
+      { error: "Token expired or invalid" },
+      { status: 401 }
+    );
   }
 
   try {
@@ -104,32 +123,66 @@ export async function POST(request: Request) {
     const listing = await db
       .collection("foodlistings")
       .findOne({ _id: new ObjectId(listingId) });
+
     if (!listing) {
       return NextResponse.json({ error: "Listing not found" }, { status: 404 });
     }
 
-    if (listing.postedBy.toString() === user.id.toString()) {
+    // Check if this is the first message in the conversation
+    const existingMessages = await db
+      .collection("messages")
+      .find({ listingId: new ObjectId(listingId) })
+      .toArray();
+
+    let recipientId;
+    if (existingMessages.length === 0) {
+      // This is the first message in the conversation, block user from replying to their own listing
+      if (listing.postedBy.toString() === user.id.toString()) {
+        return NextResponse.json(
+          { error: "Cannot reply to your own listing" },
+          { status: 400 }
+        );
+      }
+      // Set recipient as the listing owner if it's the first message
+      recipientId = listing.postedBy;
+    } else {
+      // If messages exist, set recipient as the other party in the conversation
+      recipientId =
+        existingMessages[0].senderId.toString() === user.id.toString()
+          ? existingMessages[0].recipientId
+          : existingMessages[0].senderId;
+    }
+
+    // Ensure recipientId is valid
+    if (!recipientId) {
       return NextResponse.json(
-        { error: "You cannot message yourself" },
+        { error: "Recipient ID is not set" },
         { status: 400 }
       );
     }
 
-    const sender = await db.collection("users").findOne({ _id: new ObjectId(user.id) });
+    const sender = await db
+      .collection("users")
+      .findOne({ _id: new ObjectId(user.id) });
     if (!sender) {
       return NextResponse.json({ error: "Sender not found" }, { status: 404 });
     }
 
-    const recipient = await db.collection("users").findOne({ _id: new ObjectId(listing.postedBy) });
+    const recipient = await db
+      .collection("users")
+      .findOne({ _id: new ObjectId(recipientId) });
     if (!recipient) {
-      return NextResponse.json({ error: "Recipient not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Recipient not found" },
+        { status: 404 }
+      );
     }
 
     const newMessage = {
       listingId: new ObjectId(listingId),
       senderId: new ObjectId(user.id),
       senderName: sender.name,
-      recipientId: new ObjectId(listing.postedBy),
+      recipientId: new ObjectId(recipientId),
       recipientName: recipient.name,
       content,
       timestamp: new Date(),
@@ -137,7 +190,7 @@ export async function POST(request: Request) {
 
     const result = await db.collection("messages").insertOne(newMessage);
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: "Message sent successfully",
       id: result.insertedId.toString(),
       senderId: newMessage.senderId.toString(),
