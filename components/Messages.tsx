@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { getCurrentUser } from "../lib/auth";
 import { User, Message, Conversation } from "../types";
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
 const Messages: React.FC = () => {
@@ -22,7 +22,7 @@ const Messages: React.FC = () => {
       if (user) {
         setCurrentUser(user);
       } else {
-        router.push('/login');
+        router.push("/login");
       }
     };
     fetchUser();
@@ -36,7 +36,7 @@ const Messages: React.FC = () => {
   }, [currentUser]);
 
   useEffect(() => {
-    const conversationId = searchParams.get('conversationId');
+    const conversationId = searchParams.get("conversationId");
     if (conversationId) {
       setSelectedConversation(conversationId);
       fetchMessages(conversationId);
@@ -45,27 +45,27 @@ const Messages: React.FC = () => {
 
   const fetchAvailableUsers = async () => {
     try {
-      const response = await fetch('/api/users', {
+      const response = await fetch("/api/users", {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
       if (response.ok) {
         const data = await response.json();
         setAvailableUsers(data);
       } else {
-        console.error('Failed to fetch available users');
+        console.error("Failed to fetch available users");
       }
     } catch (error) {
-      console.error('Error fetching available users:', error);
+      console.error("Error fetching available users:", error);
     }
   };
 
   const fetchConversations = async () => {
     try {
-      const response = await fetch('/api/chat', {
+      const response = await fetch("/api/chat", {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
       if (response.ok) {
@@ -73,39 +73,42 @@ const Messages: React.FC = () => {
         console.log("Fetched conversations:", data);
         setConversations(data);
       } else {
-        console.error('Failed to fetch conversations:', response.statusText);
+        console.error("Failed to fetch conversations:", response.statusText);
       }
     } catch (error) {
-      console.error('Error fetching conversations:', error);
+      console.error("Error fetching conversations:", error);
     }
   };
 
-  const fetchMessages = async (conversationId: string) => {
+  const fetchMessages = useCallback(async (conversationId: string) => {
     try {
-      const response = await fetch(`/api/chat?conversationId=${conversationId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+      const response = await fetch(
+        `/api/chat?conversationId=${conversationId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
       if (response.ok) {
         const data = await response.json();
-        console.log("Fetched messages:", data); // Add this line
+        console.log("Fetched messages:", data);
         setMessages(data);
       } else {
-        console.error('Failed to fetch messages:', response.statusText);
+        console.error("Failed to fetch messages:", response.statusText);
       }
     } catch (error) {
-      console.error('Error fetching messages:', error);
+      console.error("Error fetching messages:", error);
     }
-  };
+  }, []);
 
   const initiateChat = async (userId: string) => {
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
+      const response = await fetch("/api/chat", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify({ recipientId: userId }),
       });
@@ -116,7 +119,7 @@ const Messages: React.FC = () => {
         router.push(`/messages?conversationId=${data._id}`);
       }
     } catch (error) {
-      console.error('Error initiating chat:', error);
+      console.error("Error initiating chat:", error);
     }
   };
 
@@ -126,29 +129,30 @@ const Messages: React.FC = () => {
 
     try {
       const response = await fetch(`/api/chat`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify({ content: newMessage, recipientId: selectedConversation }),
+        body: JSON.stringify({
+          content: newMessage,
+          recipientId: selectedConversation,
+        }),
       });
       if (response.ok) {
         const data = await response.json();
-        console.log("Sent message:", data); // Add this line
         setMessages((prevMessages) => [...prevMessages, data]);
         setNewMessage("");
         fetchConversations();
       } else {
-        console.error('Failed to send message:', response.statusText);
+        console.error("Failed to send message:", response.statusText);
       }
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error("Error sending message:", error);
     }
   };
 
   const handleConversationSelect = (conversationId: string) => {
-    console.log("Selected conversation:", conversationId);
     setSelectedConversation(conversationId);
     fetchMessages(conversationId);
     router.push(`/messages?conversationId=${conversationId}`);
@@ -171,10 +175,14 @@ const Messages: React.FC = () => {
               }`}
               onClick={() => handleConversationSelect(conv._id)}
             >
-              <div className="font-bold">{conv.otherUser?.name || "Unknown User"}</div>
-              <div className="text-sm text-gray-500">{conv.lastMessage?.content || "No messages"}</div>
+              <div className="font-bold">
+                {conv.otherUser?.name || "Unknown User"}
+              </div>
+              <div className="text-sm text-gray-500">
+                {conv.lastMessage?.content || "No messages"}
+              </div>
               <div className="text-xs text-gray-400">
-                {conv.lastMessage?.timestamp 
+                {conv.lastMessage?.timestamp
                   ? new Date(conv.lastMessage.timestamp).toLocaleString()
                   : "No timestamp"}
               </div>

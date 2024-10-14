@@ -24,61 +24,74 @@ export async function GET(request: Request) {
 
     if (conversationId) {
       // Fetch messages for a specific conversation
-      const messages = await db.collection("messages").find({
-        $or: [
-          { sender: new ObjectId(user.id), recipient: new ObjectId(conversationId) },
-          { sender: new ObjectId(conversationId), recipient: new ObjectId(user.id) }
-        ]
-      }).sort({ timestamp: 1 }).toArray();
+      const messages = await db
+        .collection("messages")
+        .find({
+          $or: [
+            {
+              sender: new ObjectId(user.id),
+              recipient: new ObjectId(conversationId),
+            },
+            {
+              sender: new ObjectId(conversationId),
+              recipient: new ObjectId(user.id),
+            },
+          ],
+        })
+        .sort({ timestamp: 1 })
+        .toArray();
 
       console.log("Fetched messages:", messages); // Add this line
 
       return NextResponse.json(messages);
     } else {
       // Fetch all conversations
-      const conversations = await db.collection("messages").aggregate([
-        {
-          $match: {
-            $or: [
-              { sender: new ObjectId(user.id) },
-              { recipient: new ObjectId(user.id) }
-            ]
-          }
-        },
-        {
-          $group: {
-            _id: {
-              $cond: [
-                { $eq: ["$sender", new ObjectId(user.id)] },
-                "$recipient",
-                "$sender"
-              ]
+      const conversations = await db
+        .collection("messages")
+        .aggregate([
+          {
+            $match: {
+              $or: [
+                { sender: new ObjectId(user.id) },
+                { recipient: new ObjectId(user.id) },
+              ],
             },
-            lastMessage: { $last: "$$ROOT" }
-          }
-        },
-        {
-          $lookup: {
-            from: "users",
-            localField: "_id",
-            foreignField: "_id",
-            as: "otherUser"
-          }
-        },
-        {
-          $unwind: "$otherUser"
-        },
-        {
-          $project: {
-            _id: 1,
-            otherUser: { _id: 1, name: 1 },
-            lastMessage: { content: 1, timestamp: 1 }
-          }
-        },
-        {
-          $sort: { "lastMessage.timestamp": -1 }
-        }
-      ]).toArray();
+          },
+          {
+            $group: {
+              _id: {
+                $cond: [
+                  { $eq: ["$sender", new ObjectId(user.id)] },
+                  "$recipient",
+                  "$sender",
+                ],
+              },
+              lastMessage: { $last: "$$ROOT" },
+            },
+          },
+          {
+            $lookup: {
+              from: "users",
+              localField: "_id",
+              foreignField: "_id",
+              as: "otherUser",
+            },
+          },
+          {
+            $unwind: "$otherUser",
+          },
+          {
+            $project: {
+              _id: 1,
+              otherUser: { _id: 1, name: 1 },
+              lastMessage: { content: 1, timestamp: 1 },
+            },
+          },
+          {
+            $sort: { "lastMessage.timestamp": -1 },
+          },
+        ])
+        .toArray();
 
       console.log("Fetched conversations:", conversations); // Add this line
 
@@ -115,17 +128,20 @@ export async function POST(request: Request) {
       recipient: new ObjectId(recipientId),
       content,
       timestamp: new Date(),
-      read: false
+      read: false,
     };
 
     const result = await db.collection("messages").insertOne(newMessage);
 
     console.log("Inserted new message:", result.insertedId); // Add this line
 
-    return NextResponse.json({
-      ...newMessage,
-      _id: result.insertedId
-    }, { status: 201 });
+    return NextResponse.json(
+      {
+        ...newMessage,
+        _id: result.insertedId,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Error sending message:", error);
     return NextResponse.json(
