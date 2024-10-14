@@ -20,12 +20,22 @@ export interface FoodListing {
 // ... other types
 
 export interface Message {
-  id: string;
-  listingId: string;
-  senderId: string;
-  senderName: string;
-  recipientId: string;
-  recipientName: string;
+  _id: string;
+  sender: string;
+  recipient: string;
   content: string;
   timestamp: string;
+  read: boolean;
+}
+
+export interface Conversation {
+  _id: string;
+  otherUser: {
+    _id: string;
+    name: string;
+  };
+  lastMessage: {
+    content: string;
+    timestamp: string;
+  };
 }

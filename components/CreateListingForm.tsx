@@ -23,6 +23,7 @@ export default function CreateListingForm({
     expirationDate: "",
     expirationTime: "00:00",
     location: "",
+    image: null as File | null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,26 +73,36 @@ export default function CreateListingForm({
       }
 
       // Combine date and time for expiration
-      const expiration = new Date(
-        `${formData.expirationDate}T${formData.expirationTime}`
-      );
+      const expiration = new Date(`${formData.expirationDate}T${formData.expirationTime}`);
 
+      const dataToSend = {
+        foodType: formData.foodType,
+        description: formData.description,
+        quantity: `${formData.quantity} ${formData.quantityUnit}`,
+        expiration: expiration.toISOString(),
+        location: formData.location,
+        source: formData.source,
+      };
+
+      console.log("Sending request to create listing...");
       const response = await fetch("/api/listings", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          ...formData,
-          quantity: `${formData.quantity} ${formData.quantityUnit}`,
-          expiration: expiration.toISOString(),
-        }),
+        body: JSON.stringify(dataToSend),
       });
 
+      console.log("Response status:", response.status);
       if (!response.ok) {
-        throw new Error("Failed to create listing");
+        const errorData = await response.json();
+        console.error("Error response:", errorData);
+        throw new Error(errorData.error || "Failed to create listing");
       }
+
+      const data = await response.json();
+      console.log("Listing created successfully:", data);
 
       onListingCreated();
       setFormData({
@@ -104,8 +115,10 @@ export default function CreateListingForm({
         expirationDate: "",
         expirationTime: "00:00",
         location: "",
+        image: null,
       });
     } catch (err) {
+      console.error("Error in handleSubmit:", err);
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsSubmitting(false);

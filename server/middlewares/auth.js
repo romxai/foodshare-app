@@ -15,7 +15,17 @@ exports.protect = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await User.findById(decoded.userId);
+    // Log the decoded token for debugging
+    console.log('Decoded token:', decoded);
+
+    // Check if it's userId or id
+    const userId = decoded.userId || decoded.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Invalid token structure' });
+    }
+
+    const user = await User.findById(userId);
 
     if (!user) {
       return res.status(401).json({ message: 'The user belonging to this token no longer exists' });
@@ -25,6 +35,12 @@ exports.protect = async (req, res, next) => {
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+    if (error instanceof jwt.TokenExpiredError) {
+      return res.status(401).json({ message: 'Token expired' });
+    }
     res.status(401).json({ message: 'Not authorized, token failed' });
   }
 };

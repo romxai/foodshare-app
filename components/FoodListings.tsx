@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/dialog";
 import CreateListingForm from "@/components/CreateListingForm";
 import { getCurrentUser } from "../lib/auth";
-import MessageSystem from "./MessageSystem";
 
 const FoodListings: React.FC = () => {
   const [listings, setListings] = useState<FoodListing[]>([]);
@@ -23,9 +22,6 @@ const FoodListings: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
-  const [selectedListingId, setSelectedListingId] = useState<string | null>(
-    null
-  );
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -45,13 +41,16 @@ const FoodListings: React.FC = () => {
       const queryParams = new URLSearchParams({
         search: searchTerm,
         ...advancedParams,
+        userId: user?.id || '',
       });
       const response = await fetch(`/api/listings?${queryParams}`);
       if (!response.ok) {
         throw new Error("Failed to fetch listings");
       }
       const data = await response.json();
-      setListings(data);
+      // Filter out user's own listings on the client side
+      const filteredListings = data.filter((listing: FoodListing) => listing.postedBy !== user?.id);
+      setListings(filteredListings);
     } catch (error) {
       console.error("Error fetching listings:", error);
       setError("Failed to fetch listings. Please try again.");
@@ -61,8 +60,10 @@ const FoodListings: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchListings();
-  }, []);
+    if (user) {
+      fetchListings();
+    }
+  }, [user]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,26 +147,9 @@ const FoodListings: React.FC = () => {
               <p>Location: {listing.location}</p>
               <p>Posted: {new Date(listing.createdAt).toLocaleString()}</p>
               <p>Posted By: {listing.postedBy}</p>
-              <Button onClick={() => setSelectedListingId(listing._id)}>
-                Contact Seller
-              </Button>
             </li>
           ))}
         </ul>
-      )}
-
-      {selectedListingId && (
-        <Dialog
-          open={!!selectedListingId}
-          onOpenChange={() => setSelectedListingId(null)}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Message Seller</DialogTitle>
-            </DialogHeader>
-            <MessageSystem listingId={selectedListingId} />
-          </DialogContent>
-        </Dialog>
       )}
 
       {user && (
