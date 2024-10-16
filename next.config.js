@@ -4,6 +4,9 @@ const nextConfig = {
   env: {
     JWT_SECRET: process.env.JWT_SECRET,
   },
+  images: {
+    domains: ['localhost', 'your-production-domain.com'],
+  },
 }
 
 module.exports = nextConfig

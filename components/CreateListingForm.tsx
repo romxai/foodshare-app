@@ -5,6 +5,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { getCurrentUser } from "../lib/auth";
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 interface CreateListingFormProps {
   onListingCreated: () => void;
@@ -23,10 +25,12 @@ export default function CreateListingForm({
     expirationDate: "",
     expirationTime: "00:00",
     location: "",
-    image: null as File | null,
+    images: [] as File[],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -56,8 +60,33 @@ export default function CreateListingForm({
     }));
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newImages = Array.from(e.target.files);
+      if (formData.images.length + newImages.length > 5) {
+        setError("You can only upload up to 5 images");
+        return;
+      }
+      setFormData(prev => ({ ...prev, images: [...prev.images, ...newImages] }));
+      const newPreviewUrls = newImages.map(file => URL.createObjectURL(file));
+      setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.images.length === 0) {
+      setError("Please upload at least one image");
+      return;
+    }
     setIsSubmitting(true);
     setError(null);
 
@@ -75,23 +104,25 @@ export default function CreateListingForm({
       // Combine date and time for expiration
       const expiration = new Date(`${formData.expirationDate}T${formData.expirationTime}`);
 
-      const dataToSend = {
-        foodType: formData.foodType,
-        description: formData.description,
-        quantity: `${formData.quantity} ${formData.quantityUnit}`,
-        expiration: expiration.toISOString(),
-        location: formData.location,
-        source: formData.source,
-      };
+      const formDataToSend = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (key !== 'images') {
+          formDataToSend.append(key, value as string);
+        }
+      });
+      formDataToSend.append('expiration', expiration.toISOString());
+
+      formData.images.forEach((image, index) => {
+        formDataToSend.append(`image${index}`, image);
+      });
 
       console.log("Sending request to create listing...");
       const response = await fetch("/api/listings", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(dataToSend),
+        body: formDataToSend,
       });
 
       console.log("Response status:", response.status);
@@ -115,7 +146,7 @@ export default function CreateListingForm({
         expirationDate: "",
         expirationTime: "00:00",
         location: "",
-        image: null,
+        images: [],
       });
     } catch (err) {
       console.error("Error in handleSubmit:", err);
@@ -226,8 +257,38 @@ export default function CreateListingForm({
           required
         />
       </div>
+      <div>
+        <Label htmlFor="images">Images (1-5):</Label>
+        <Input
+          type="file"
+          id="images"
+          accept="image/*"
+          onChange={handleImageChange}
+          multiple
+        />
+        <div className="mt-2 flex flex-wrap gap-2">
+          {previewUrls.map((url, index) => (
+            <div key={index} className="relative">
+              <Image
+                src={url}
+                alt={`Preview ${index + 1}`}
+                width={100}
+                height={100}
+                style={{ objectFit: 'cover' }}
+              />
+              <button
+                type="button"
+                onClick={() => removeImage(index)}
+                className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
       {error && <p className="text-red-500">{error}</p>}
-      <Button type="submit" disabled={isSubmitting}>
+      <Button type="submit" disabled={isSubmitting || formData.images.length === 0}>
         {isSubmitting ? "Creating..." : "Create Listing"}
       </Button>
     </form>

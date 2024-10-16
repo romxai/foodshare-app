@@ -12,9 +12,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import CreateListingForm from "@/components/CreateListingForm";
-import { getCurrentUser } from "../lib/auth";
-import { useRouter } from "next/navigation";
+import dynamic from 'next/dynamic';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { getCurrentUser } from "@/lib/auth";
+
+const CreateListingForm = dynamic(() => import('@/components/CreateListingForm'), {
+  ssr: false,
+});
 
 const FoodListings: React.FC = () => {
   const [listings, setListings] = useState<FoodListing[]>([]);
@@ -54,11 +59,16 @@ const FoodListings: React.FC = () => {
         throw new Error("Failed to fetch listings");
       }
       const data = await response.json();
-      // Filter out user's own listings on the client side
-      const filteredListings = data.filter(
-        (listing: FoodListing) => listing.postedBy !== user?.id
-      );
-      setListings(filteredListings);
+      console.log("Fetched listings:", data);
+      const processedListings = data.map((listing: FoodListing) => {
+        const isOwnListing = listing.postedBy === user?.id;
+        console.log(`Listing ${listing._id} - postedBy: ${listing.postedBy}, user.id: ${user?.id}, isOwnListing: ${isOwnListing}`);
+        return {
+          ...listing,
+          isOwnListing
+        };
+      });
+      setListings(processedListings);
     } catch (error) {
       console.error("Error fetching listings:", error);
       setError("Failed to fetch listings. Please try again.");
@@ -91,11 +101,11 @@ const FoodListings: React.FC = () => {
     if (!selectedListing || !newMessage.trim() || !user) return;
 
     try {
-      console.log("Sending message:", {
-        content: newMessage,
-        recipientId: selectedListing.postedBy,
-        listingId: selectedListing._id,
-      });
+      //  console.log("Sending message:", {
+      //  content: newMessage,
+      //  recipientId: selectedListing.postedBy,
+      //  listingId: selectedListing._id,
+      //  });
 
       // Fetch the recipient's ID based on their username
       const userResponse = await fetch(
@@ -174,6 +184,54 @@ const FoodListings: React.FC = () => {
     }
   };
 
+  const FoodListing = ({ listing }: { listing: FoodListing }) => {
+    console.log("Listing postedBy:", listing.postedBy);
+    console.log("Current user ID:", user?.id);
+    const isOwnListing = listing.postedBy === user?.id;
+    console.log("Is own listing:", isOwnListing);
+
+    return (
+      <div>
+        <h3 className="font-bold">{listing.foodType}</h3>
+        <p>{listing.description}</p>
+        <p>Quantity: {listing.quantity}</p>
+        <p>Expiration: {formatDate(listing.expiration)}</p>
+        <p>Location: {listing.location}</p>
+        <p>Posted: {new Date(listing.createdAt).toLocaleString()}</p>
+        <p>Posted By: {listing.postedBy}</p>
+        {listing.imagePaths && listing.imagePaths.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {listing.imagePaths.map((path, index) => (
+              <Image
+                key={index}
+                src={path.startsWith('/') ? path : `/${path}`}
+                alt={`${listing.foodType} - Image ${index + 1}`}
+                width={100}
+                height={100}
+                style={{ objectFit: 'cover' }}
+                loading="lazy"
+                onError={() => {
+                  console.error(`Error loading image ${index + 1} for ${listing.foodType}`);
+                }}
+              />
+            ))}
+          </div>
+        )}
+        <Button
+          onClick={() => handleMessageSeller(listing)}
+          className="mt-2"
+          disabled={isOwnListing}
+        >
+          {isOwnListing ? "Your Listing" : "Message Seller"}
+        </Button>
+      </div>
+    );
+  };
+
+  useEffect(() => {
+    //console.log("Current listings:", listings);
+  }, [listings]);
+
   return (
     <div className="container mx-auto px-4">
       <h1 className="text-2xl font-bold mb-4">Food Listings</h1>
@@ -210,19 +268,7 @@ const FoodListings: React.FC = () => {
         <ul>
           {listings.map((listing) => (
             <li key={listing._id} className="mb-4 p-4 border rounded">
-              <h3 className="font-bold">{listing.foodType}</h3>
-              <p>{listing.description}</p>
-              <p>Quantity: {listing.quantity}</p>
-              <p>Expiration: {formatDate(listing.expiration)}</p>
-              <p>Location: {listing.location}</p>
-              <p>Posted: {new Date(listing.createdAt).toLocaleString()}</p>
-              <p>Posted By: {listing.postedBy}</p>
-              <Button
-                onClick={() => handleMessageSeller(listing)}
-                className="mt-2"
-              >
-                Message Seller
-              </Button>
+              <FoodListing listing={listing} />
             </li>
           ))}
         </ul>
