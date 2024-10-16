@@ -30,6 +30,7 @@ export default function CreateListingForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -64,6 +65,7 @@ export default function CreateListingForm({
       const file = e.target.files[0];
       console.log("Image selected:", file.name, "Size:", file.size, "bytes");
       setFormData(prev => ({ ...prev, image: file }));
+      setPreviewUrl(URL.createObjectURL(file));
     }
   };
 
@@ -250,6 +252,17 @@ export default function CreateListingForm({
           accept="image/*"
           onChange={handleImageChange}
         />
+        {previewUrl && (
+          <div className="mt-2">
+            <Image
+              src={previewUrl}
+              alt="Preview"
+              width={200}
+              height={200}
+              objectFit="cover"
+            />
+          </div>
+        )}
       </div>
       {error && <p className="text-red-500">{error}</p>}
       <Button type="submit" disabled={isSubmitting}>

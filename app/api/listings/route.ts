@@ -102,6 +102,7 @@ export async function GET(request: Request) {
               location: 1,
               createdAt: 1,
               updatedAt: 1,
+              imagePath: 1, // Add this line
               postedBy: { $arrayElemAt: ["$userDetails.name", 0] },
             },
           },
@@ -116,6 +117,7 @@ export async function GET(request: Request) {
         updatedAt: listing.updatedAt.toISOString(),
       }));
 
+      //console.log("Formatted listings:", formattedListings);
       return NextResponse.json(formattedListings);
     } catch (error) {
       console.error("Error fetching listings:", error);
@@ -128,7 +130,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(req: Request) {
-  console.log("POST request received for listing creation");
+  //console.log("POST request received for listing creation");
 
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) {
@@ -147,48 +149,48 @@ export async function POST(req: Request) {
   try {
     const { db } = await connectToDatabase();
     const formData = await req.formData();
-    console.log("Received form data keys:", Array.from(formData.keys()));
+    //console.log("Received form data keys:", Array.from(formData.keys()));
 
     const file = formData.get("image") as File | null;
     let imagePath = "";
 
     if (file) {
-      console.log("Image file received:", file.name, "Size:", file.size, "bytes");
+      //console.log("Image file received:", file.name, "Size:", file.size, "bytes");
       const buffer = await file.arrayBuffer();
       const filename = Date.now() + "-" + file.name;
       const uploadDir = path.join(process.cwd(), "public", "uploads");
       
-      console.log("Ensuring directory exists:", uploadDir);
+      //console.log("Ensuring directory exists:", uploadDir);
       await ensureDirectoryExists(uploadDir);
       
-      imagePath = path.join("uploads", filename);
+      imagePath = `/uploads/${filename}`; // Ensure this always starts with a slash
       const filePath = path.join(uploadDir, filename);
       
-      console.log("Writing file to:", filePath);
+      //console.log("Writing file to:", filePath);
       await fs.writeFile(filePath, Buffer.from(buffer));
-      console.log("Image saved successfully");
+      //console.log("Image saved successfully");
     } else {
       console.log("No image file received");
     }
 
     const data = Object.fromEntries(formData.entries());
-    console.log("Parsed form data:", data);
+    //console.log("Parsed form data:", data);
 
     const expiration = new Date(data.expiration as string);
 
     const newListing = {
       ...data,
       expiration,
-      imagePath,
+      imagePath, // Make sure this is set correctly
       postedBy: new ObjectId(user.id),
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    console.log("New listing object:", newListing);
+    //console.log("New listing object:", newListing);
 
     const result = await db.collection("foodlistings").insertOne(newListing);
-    console.log("Listing created with ID:", result.insertedId.toString());
+    //console.log("Listing created with ID:", result.insertedId.toString());
 
     return NextResponse.json(
       {
@@ -201,7 +203,10 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Error creating listing:", error);
     return NextResponse.json(
-      { error: "Internal Server Error", details: error.message },
+      { 
+        error: "Internal Server Error", 
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     );
   }
@@ -211,7 +216,7 @@ export async function POST(req: Request) {
 const ensureDirectoryExists = async (directory: string) => {
   try {
     await fs.mkdir(directory, { recursive: true });
-    console.log("Directory ensured:", directory);
+    //console.log("Directory ensured:", directory);
   } catch (error) {
     console.error("Error creating directory:", error);
   }

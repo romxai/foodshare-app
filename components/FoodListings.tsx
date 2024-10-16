@@ -59,6 +59,7 @@ const FoodListings: React.FC = () => {
         throw new Error("Failed to fetch listings");
       }
       const data = await response.json();
+      console.log("Fetched listings:", data); // Add this line
       // Filter out user's own listings on the client side
       const filteredListings = data.filter(
         (listing: FoodListing) => listing.postedBy !== user?.id
@@ -180,6 +181,8 @@ const FoodListings: React.FC = () => {
   };
 
   const FoodListing = ({ listing }: { listing: FoodListing }) => {
+    console.log("Rendering listing:", listing);
+
     return (
       <div>
         <h3 className="font-bold">{listing.foodType}</h3>
@@ -189,21 +192,29 @@ const FoodListings: React.FC = () => {
         <p>Location: {listing.location}</p>
         <p>Posted: {new Date(listing.createdAt).toLocaleString()}</p>
         <p>Posted By: {listing.postedBy}</p>
+        {listing.imagePath && (
+          <div className="mt-2">
+            <Image
+              src={listing.imagePath.startsWith('/') ? listing.imagePath : `/${listing.imagePath}`}
+              alt={listing.foodType}
+              width={200}
+              height={200}
+              objectFit="cover"
+              loading="lazy"
+              placeholder="blur"
+              blurDataURL="/placeholder-image.jpg"
+              onError={() => {
+                console.error(`Error loading image for ${listing.foodType}`);
+              }}
+            />
+          </div>
+        )}
         <Button
           onClick={() => handleMessageSeller(listing)}
           className="mt-2"
         >
           Message Seller
         </Button>
-        
-        {listing.imagePath && (
-          <Image 
-            src={`/${listing.imagePath}`} 
-            alt={listing.foodType} 
-            width={200} 
-            height={200}
-          />
-        )}
       </div>
     );
   };
