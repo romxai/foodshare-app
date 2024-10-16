@@ -10,7 +10,9 @@ const Messages: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
+  const [selectedConversation, setSelectedConversation] = useState<
+    string | null
+  >(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const router = useRouter();
@@ -70,7 +72,10 @@ const Messages: React.FC = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        console.log("Fetched conversations:", data);
+        console.log(
+          "Fetched conversations:",
+          data.map((conv: Conversation) => conv._id)
+        );
         setConversations(data);
       } else {
         console.error("Failed to fetch conversations:", response.statusText);
@@ -82,14 +87,11 @@ const Messages: React.FC = () => {
 
   const fetchMessages = useCallback(async (conversationId: string) => {
     try {
-      const response = await fetch(
-        `/api/chat?conversationId=${conversationId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
+      const response = await fetch(`/api/chat?conversationId=${conversationId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
       if (response.ok) {
         const data = await response.json();
         console.log("Fetched messages:", data);
@@ -127,6 +129,13 @@ const Messages: React.FC = () => {
     e.preventDefault();
     if (!newMessage.trim() || !selectedConversation || !currentUser) return;
 
+    console.log("Selected Conversation ID:", selectedConversation);
+    console.log("Attempting to send message:", {
+      content: newMessage,
+      conversationId: selectedConversation,
+      currentUser: currentUser.id,
+    });
+
     try {
       const response = await fetch(`/api/chat`, {
         method: "POST",
@@ -136,26 +145,38 @@ const Messages: React.FC = () => {
         },
         body: JSON.stringify({
           content: newMessage,
-          recipientId: selectedConversation,
+          conversationId: selectedConversation,
         }),
       });
+
+      console.log("Response status:", response.status);
+      const data = await response.json();
+      console.log("Response data:", data);
+
       if (response.ok) {
-        const data = await response.json();
-        setMessages((prevMessages) => [...prevMessages, data]);
+        setMessages((prevMessages) => [...prevMessages, data.message]);
         setNewMessage("");
         fetchConversations();
       } else {
-        console.error("Failed to send message:", response.statusText);
+        console.error("Failed to send message:", data.error);
+        if (response.status === 404) {
+          console.log("Conversation not found, fetching conversations again");
+          await fetchConversations();
+          alert("The conversation could not be found. Please try selecting it again.");
+        } else {
+          alert(`Failed to send message: ${data.error}`);
+        }
       }
     } catch (error) {
       console.error("Error sending message:", error);
+      alert("An error occurred while sending the message");
     }
   };
 
   const handleConversationSelect = (conversationId: string) => {
+    console.log("Selected conversation:", conversationId);
     setSelectedConversation(conversationId);
     fetchMessages(conversationId);
-    router.push(`/messages?conversationId=${conversationId}`);
   };
 
   if (!currentUser) {

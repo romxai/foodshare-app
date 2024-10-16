@@ -121,63 +121,81 @@ export async function POST(request: Request) {
 
   try {
     const { db } = await connectToDatabase();
-    const { content, recipientId, listingId } = await request.json();
+    const { content, conversationId, recipientId, listingId } = await request.json();
 
-    console.log("Received data:", { content, recipientId, listingId });
+    console.log("Received data:", { content, conversationId, recipientId, listingId });
 
-    // Validate ObjectId
-    if (!ObjectId.isValid(recipientId)) {
-      console.error("Invalid recipient ID:", recipientId);
-      return NextResponse.json({ error: `Invalid recipient ID: ${recipientId}` }, { status: 400 });
-    }
-    if (!ObjectId.isValid(listingId)) {
-      console.error("Invalid listing ID:", listingId);
-      return NextResponse.json({ error: `Invalid listing ID: ${listingId}` }, { status: 400 });
-    }
+    let conversation: any;
 
-    // Check if a conversation already exists
-    let conversation = await db.collection("conversations").findOne({
-      participants: { $all: [new ObjectId(user.id), new ObjectId(recipientId)] },
-      listingId: new ObjectId(listingId)
-    });
+    if (conversationId) {
+      console.log("Searching for existing conversation with ID:", conversationId);
+      conversation = await db.collection("conversations").findOne({ _id: new ObjectId(conversationId) });
+      
+      if (!conversation) {
+        console.log("Conversation not found by ID, searching by participants");
+        conversation = await db.collection("conversations").findOne({
+          participants: { $all: [new ObjectId(user.id), new ObjectId(conversationId)] }
+        });
+      }
 
-    if (!conversation) {
-      // Create a new conversation
-      const newConversation = {
-        participants: [new ObjectId(user.id), new ObjectId(recipientId)],
+      if (!conversation) {
+        console.log("Conversation not found");
+        return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
+      }
+      console.log("Found conversation:", conversation);
+    } else if (recipientId && listingId) {
+      console.log("Creating new conversation");
+      conversation = await db.collection("conversations").findOne({
+        participants: {
+          $all: [new ObjectId(user.id), new ObjectId(recipientId)],
+        },
         listingId: new ObjectId(listingId),
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      const result = await db.collection("conversations").insertOne(newConversation);
-      conversation = { ...newConversation, _id: result.insertedId };
+      });
+
+      if (!conversation) {
+        const newConversation = {
+          participants: [new ObjectId(user.id), new ObjectId(recipientId)],
+          listingId: new ObjectId(listingId),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        const result = await db
+          .collection("conversations")
+          .insertOne(newConversation);
+        conversation = { ...newConversation, _id: result.insertedId };
+      }
+    } else {
+      console.log("Invalid request parameters");
+      return NextResponse.json({ error: "Invalid request parameters" }, { status: 400 });
     }
 
-    // Create the new message
     const newMessage = {
       conversationId: conversation._id,
       sender: new ObjectId(user.id),
-      recipient: new ObjectId(recipientId),
+      recipient: conversation.participants.find((p: ObjectId) => !p.equals(new ObjectId(user.id))),
       content,
       timestamp: new Date(),
-      read: false
+      read: false,
     };
 
+    console.log("Inserting new message:", newMessage);
     const messageResult = await db.collection("messages").insertOne(newMessage);
 
-    // Update the conversation's last message
+    console.log("Updating conversation with new message");
     await db.collection("conversations").updateOne(
       { _id: conversation._id },
-      { $set: { lastMessage: newMessage, updatedAt: new Date() } }
+      { $set: { lastMessage: { content, timestamp: new Date() }, updatedAt: new Date() } }
     );
 
+    console.log("Message sent successfully");
     return NextResponse.json({
       conversation,
       message: { ...newMessage, _id: messageResult.insertedId }
     }, { status: 201 });
   } catch (error: unknown) {
     console.error("Error creating conversation or sending message:", error);
-    const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+    const errorMessage =
+      error instanceof Error ? error.message : "An unexpected error occurred";
     return NextResponse.json(
       { error: "An unexpected error occurred", details: errorMessage },
       { status: 500 }

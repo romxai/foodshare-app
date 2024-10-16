@@ -23,7 +23,9 @@ const FoodListings: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
-  const [selectedListing, setSelectedListing] = useState<FoodListing | null>(null);
+  const [selectedListing, setSelectedListing] = useState<FoodListing | null>(
+    null
+  );
   const [newMessage, setNewMessage] = useState("");
   const router = useRouter();
 
@@ -45,7 +47,7 @@ const FoodListings: React.FC = () => {
       const queryParams = new URLSearchParams({
         search: searchTerm,
         ...advancedParams,
-        userId: user?.id || '',
+        userId: user?.id || "",
       });
       const response = await fetch(`/api/listings?${queryParams}`);
       if (!response.ok) {
@@ -53,7 +55,9 @@ const FoodListings: React.FC = () => {
       }
       const data = await response.json();
       // Filter out user's own listings on the client side
-      const filteredListings = data.filter((listing: FoodListing) => listing.postedBy !== user?.id);
+      const filteredListings = data.filter(
+        (listing: FoodListing) => listing.postedBy !== user?.id
+      );
       setListings(filteredListings);
     } catch (error) {
       console.error("Error fetching listings:", error);
@@ -86,28 +90,22 @@ const FoodListings: React.FC = () => {
   const sendMessage = async () => {
     if (!selectedListing || !newMessage.trim() || !user) return;
 
-    const postedByUsername = selectedListing.postedBy;
-    const listingId = selectedListing._id;
-
-    console.log("Sending message for listing:", {
-      content: newMessage,
-      postedByUsername,
-      listingId
-    });
-
-    if (!postedByUsername || !listingId) {
-      console.error("Invalid postedByUsername or listingId");
-      alert("Invalid recipient or listing information. Unable to send message.");
-      return;
-    }
-
     try {
-      // First, fetch the recipient's user ID
-      const userResponse = await fetch(`/api/users?username=${postedByUsername}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
+      console.log("Sending message:", {
+        content: newMessage,
+        recipientId: selectedListing.postedBy,
+        listingId: selectedListing._id,
       });
+
+      // Fetch the recipient's ID based on their username
+      const userResponse = await fetch(
+        `/api/users?username=${selectedListing.postedBy}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
       if (!userResponse.ok) {
         throw new Error("Failed to fetch recipient user information");
@@ -118,9 +116,6 @@ const FoodListings: React.FC = () => {
         throw new Error("Invalid recipient user data");
       }
 
-      const recipientId = userData.id;
-
-      // Now send the message with the correct recipient ID
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
@@ -129,24 +124,24 @@ const FoodListings: React.FC = () => {
         },
         body: JSON.stringify({
           content: newMessage,
-          recipientId,
-          listingId,
+          recipientId: userData.id,
+          listingId: selectedListing._id,
         }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        const data = await response.json();
         setNewMessage("");
         setSelectedListing(null);
         router.push(`/messages?conversationId=${data.conversation._id}`);
       } else {
-        const errorData = await response.json();
-        console.error("Failed to send message:", errorData.error);
-        alert(`Failed to send message: ${errorData.error}`);
+        console.error("Failed to send message:", data.error, data.details);
+        alert(`Failed to send message: ${data.error}. ${data.details || ""}`);
       }
     } catch (error) {
       console.error("Error sending message:", error);
-      alert("An error occurred while sending the message");
+      alert("An error occurred while sending the message. Please try again.");
     }
   };
 
@@ -222,7 +217,10 @@ const FoodListings: React.FC = () => {
               <p>Location: {listing.location}</p>
               <p>Posted: {new Date(listing.createdAt).toLocaleString()}</p>
               <p>Posted By: {listing.postedBy}</p>
-              <Button onClick={() => handleMessageSeller(listing)} className="mt-2">
+              <Button
+                onClick={() => handleMessageSeller(listing)}
+                className="mt-2"
+              >
                 Message Seller
               </Button>
             </li>
@@ -245,7 +243,10 @@ const FoodListings: React.FC = () => {
       )}
 
       {selectedListing && (
-        <Dialog open={!!selectedListing} onOpenChange={() => setSelectedListing(null)}>
+        <Dialog
+          open={!!selectedListing}
+          onOpenChange={() => setSelectedListing(null)}
+        >
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Message Seller</DialogTitle>
