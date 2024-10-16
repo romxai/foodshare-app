@@ -59,7 +59,7 @@ const FoodListings: React.FC = () => {
         throw new Error("Failed to fetch listings");
       }
       const data = await response.json();
-      console.log("Fetched listings:", data); // Add this line
+      console.log("Fetched listings:", data); // Add this line to log the fetched data
       // Filter out user's own listings on the client side
       const filteredListings = data.filter(
         (listing: FoodListing) => listing.postedBy !== user?.id
@@ -192,21 +192,22 @@ const FoodListings: React.FC = () => {
         <p>Location: {listing.location}</p>
         <p>Posted: {new Date(listing.createdAt).toLocaleString()}</p>
         <p>Posted By: {listing.postedBy}</p>
-        {listing.imagePath && (
-          <div className="mt-2">
-            <Image
-              src={listing.imagePath.startsWith('/') ? listing.imagePath : `/${listing.imagePath}`}
-              alt={listing.foodType}
-              width={200}
-              height={200}
-              objectFit="cover"
-              loading="lazy"
-              placeholder="blur"
-              blurDataURL="/placeholder-image.jpg"
-              onError={() => {
-                console.error(`Error loading image for ${listing.foodType}`);
-              }}
-            />
+        {listing.imagePaths && listing.imagePaths.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {listing.imagePaths.map((path, index) => (
+              <Image
+                key={index}
+                src={path.startsWith('/') ? path : `/${path}`}
+                alt={`${listing.foodType} - Image ${index + 1}`}
+                width={100}
+                height={100}
+                objectFit="cover"
+                loading="lazy"
+                onError={() => {
+                  console.error(`Error loading image ${index + 1} for ${listing.foodType}`);
+                }}
+              />
+            ))}
           </div>
         )}
         <Button
@@ -218,6 +219,10 @@ const FoodListings: React.FC = () => {
       </div>
     );
   };
+
+  useEffect(() => {
+    console.log("Current listings:", listings);
+  }, [listings]);
 
   return (
     <div className="container mx-auto px-4">

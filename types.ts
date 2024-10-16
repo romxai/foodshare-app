@@ -15,7 +15,7 @@ export interface FoodListing {
   postedBy: string; // This might be storing a username instead of an ID
   createdAt: string;
   updatedAt: string;
-  imagePath?: string; // Add this line
+  imagePaths: string[]; // Change this line
 }
 
 // ... other types

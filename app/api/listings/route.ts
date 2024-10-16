@@ -102,7 +102,7 @@ export async function GET(request: Request) {
               location: 1,
               createdAt: 1,
               updatedAt: 1,
-              imagePath: 1, // Add this line
+              imagePaths: 1, // Make sure this line is present
               postedBy: { $arrayElemAt: ["$userDetails.name", 0] },
             },
           },
@@ -149,54 +149,45 @@ export async function POST(req: Request) {
   try {
     const { db } = await connectToDatabase();
     const formData = await req.formData();
-    //console.log("Received form data keys:", Array.from(formData.keys()));
 
-    const file = formData.get("image") as File | null;
-    let imagePath = "";
+    let imagePaths: string[] = [];
 
-    if (file) {
-      //console.log("Image file received:", file.name, "Size:", file.size, "bytes");
-      const buffer = await file.arrayBuffer();
-      const filename = Date.now() + "-" + file.name;
-      const uploadDir = path.join(process.cwd(), "public", "uploads");
-      
-      //console.log("Ensuring directory exists:", uploadDir);
-      await ensureDirectoryExists(uploadDir);
-      
-      imagePath = `/uploads/${filename}`; // Ensure this always starts with a slash
-      const filePath = path.join(uploadDir, filename);
-      
-      //console.log("Writing file to:", filePath);
-      await fs.writeFile(filePath, Buffer.from(buffer));
-      //console.log("Image saved successfully");
-    } else {
-      console.log("No image file received");
+    for (let i = 0; i < 5; i++) {
+      const file = formData.get(`image${i}`) as File | null;
+      if (file) {
+        const buffer = await file.arrayBuffer();
+        const filename = Date.now() + "-" + file.name;
+        const uploadDir = path.join(process.cwd(), "public", "uploads");
+        
+        await ensureDirectoryExists(uploadDir);
+        
+        const imagePath = `/uploads/${filename}`;
+        const filePath = path.join(uploadDir, filename);
+        
+        await fs.writeFile(filePath, Buffer.from(buffer));
+        imagePaths.push(imagePath);
+      }
     }
 
     const data = Object.fromEntries(formData.entries());
-    //console.log("Parsed form data:", data);
-
     const expiration = new Date(data.expiration as string);
 
     const newListing = {
       ...data,
       expiration,
-      imagePath, // Make sure this is set correctly
+      imagePaths,
       postedBy: new ObjectId(user.id),
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    //console.log("New listing object:", newListing);
-
     const result = await db.collection("foodlistings").insertOne(newListing);
-    //console.log("Listing created with ID:", result.insertedId.toString());
 
     return NextResponse.json(
       {
         message: "Listing created successfully",
         id: result.insertedId.toString(),
-        imagePath,
+        imagePaths,
       },
       { status: 201 }
     );
