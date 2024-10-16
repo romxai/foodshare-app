@@ -59,7 +59,7 @@ const FoodListings: React.FC = () => {
         throw new Error("Failed to fetch listings");
       }
       const data = await response.json();
-      console.log("Fetched listings:", data); // Add this line to log the fetched data
+      //console.log("Fetched listings:", data); // Add this line to log the fetched data
       // Filter out user's own listings on the client side
       const filteredListings = data.filter(
         (listing: FoodListing) => listing.postedBy !== user?.id
@@ -97,11 +97,11 @@ const FoodListings: React.FC = () => {
     if (!selectedListing || !newMessage.trim() || !user) return;
 
     try {
-      console.log("Sending message:", {
-        content: newMessage,
-        recipientId: selectedListing.postedBy,
-        listingId: selectedListing._id,
-      });
+      //  console.log("Sending message:", {
+      //  content: newMessage,
+      //  recipientId: selectedListing.postedBy,
+      //  listingId: selectedListing._id,
+      //  });
 
       // Fetch the recipient's ID based on their username
       const userResponse = await fetch(
@@ -181,7 +181,7 @@ const FoodListings: React.FC = () => {
   };
 
   const FoodListing = ({ listing }: { listing: FoodListing }) => {
-    console.log("Rendering listing:", listing);
+    //console.log("Rendering listing:", listing);
 
     return (
       <div>
@@ -221,7 +221,7 @@ const FoodListings: React.FC = () => {
   };
 
   useEffect(() => {
-    console.log("Current listings:", listings);
+    //console.log("Current listings:", listings);
   }, [listings]);
 
   return (
