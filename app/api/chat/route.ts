@@ -41,7 +41,7 @@ export async function GET(request: Request) {
         .sort({ timestamp: 1 })
         .toArray();
 
-      console.log("Fetched messages:", messages); // Add this line
+      //console.log("Fetched messages:", messages); // Add this line
 
       return NextResponse.json(messages);
     } else {
@@ -121,31 +121,65 @@ export async function POST(request: Request) {
 
   try {
     const { db } = await connectToDatabase();
-    const { content, recipientId } = await request.json();
+    const { content, recipientId, listingId } = await request.json();
 
+    console.log("Received data:", { content, recipientId, listingId });
+
+    // Validate ObjectId
+    if (!ObjectId.isValid(recipientId)) {
+      console.error("Invalid recipient ID:", recipientId);
+      return NextResponse.json({ error: `Invalid recipient ID: ${recipientId}` }, { status: 400 });
+    }
+    if (!ObjectId.isValid(listingId)) {
+      console.error("Invalid listing ID:", listingId);
+      return NextResponse.json({ error: `Invalid listing ID: ${listingId}` }, { status: 400 });
+    }
+
+    // Check if a conversation already exists
+    let conversation = await db.collection("conversations").findOne({
+      participants: { $all: [new ObjectId(user.id), new ObjectId(recipientId)] },
+      listingId: new ObjectId(listingId)
+    });
+
+    if (!conversation) {
+      // Create a new conversation
+      const newConversation = {
+        participants: [new ObjectId(user.id), new ObjectId(recipientId)],
+        listingId: new ObjectId(listingId),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      const result = await db.collection("conversations").insertOne(newConversation);
+      conversation = { ...newConversation, _id: result.insertedId };
+    }
+
+    // Create the new message
     const newMessage = {
+      conversationId: conversation._id,
       sender: new ObjectId(user.id),
       recipient: new ObjectId(recipientId),
       content,
       timestamp: new Date(),
-      read: false,
+      read: false
     };
 
-    const result = await db.collection("messages").insertOne(newMessage);
+    const messageResult = await db.collection("messages").insertOne(newMessage);
 
-    console.log("Inserted new message:", result.insertedId); // Add this line
-
-    return NextResponse.json(
-      {
-        ...newMessage,
-        _id: result.insertedId,
-      },
-      { status: 201 }
+    // Update the conversation's last message
+    await db.collection("conversations").updateOne(
+      { _id: conversation._id },
+      { $set: { lastMessage: newMessage, updatedAt: new Date() } }
     );
-  } catch (error) {
-    console.error("Error sending message:", error);
+
+    return NextResponse.json({
+      conversation,
+      message: { ...newMessage, _id: messageResult.insertedId }
+    }, { status: 201 });
+  } catch (error: unknown) {
+    console.error("Error creating conversation or sending message:", error);
+    const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
     return NextResponse.json(
-      { error: "An unexpected error occurred" },
+      { error: "An unexpected error occurred", details: errorMessage },
       { status: 500 }
     );
   }

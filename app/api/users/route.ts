@@ -15,27 +15,24 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const username = searchParams.get("username");
+
+  if (!username) {
+    return NextResponse.json({ error: "Username is required" }, { status: 400 });
+  }
+
   try {
     const { db } = await connectToDatabase();
+    const userData = await db.collection("users").findOne({ name: username });
 
-    const users = await db.collection("users").find({
-      _id: { $ne: user.id } // Exclude the current user
-    }).project({
-      _id: 1,
-      name: 1,
-      email: 1
-    }).toArray();
+    if (!userData) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
 
-    // Convert MongoDB _id to string id
-    const formattedUsers = users.map(u => ({
-      id: u._id.toString(),
-      name: u.name,
-      email: u.email
-    }));
-
-    return NextResponse.json(formattedUsers);
+    return NextResponse.json({ id: userData._id.toString(), name: userData.name });
   } catch (error) {
-    console.error("Error fetching users:", error);
+    console.error("Error fetching user data:", error);
     return NextResponse.json(
       { error: "An unexpected error occurred" },
       { status: 500 }

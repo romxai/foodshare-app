@@ -12,7 +12,7 @@ export interface FoodListing {
   quantity: string;
   expiration: string;
   location: string;
-  postedBy: string;
+  postedBy: string; // This might be storing a username instead of an ID
   createdAt: string;
   updatedAt: string;
 }
@@ -21,6 +21,7 @@ export interface FoodListing {
 
 export interface Message {
   _id: string;
+  conversationId: string;
   sender: string;
   recipient: string;
   content: string;
@@ -30,12 +31,23 @@ export interface Message {
 
 export interface Conversation {
   _id: string;
-  otherUser: {
+  participants: string[];
+  listingId: string;
+  createdAt: string;
+  updatedAt: string;
+  lastMessage?: {
+    content: string;
+    timestamp: string;
+  };
+  otherUser?: {
     _id: string;
     name: string;
   };
-  lastMessage: {
-    content: string;
-    timestamp: string;
+}
+
+export interface ConversationWithOtherUser extends Conversation {
+  otherUser: {
+    _id: string;
+    name: string;
   };
 }

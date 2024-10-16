@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import CreateListingForm from "@/components/CreateListingForm";
 import { getCurrentUser } from "../lib/auth";
+import { useRouter } from "next/navigation";
 
 const FoodListings: React.FC = () => {
   const [listings, setListings] = useState<FoodListing[]>([]);
@@ -22,6 +23,9 @@ const FoodListings: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
+  const [selectedListing, setSelectedListing] = useState<FoodListing | null>(null);
+  const [newMessage, setNewMessage] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -73,6 +77,77 @@ const FoodListings: React.FC = () => {
   const handleAdvancedSearch = (params: any) => {
     fetchListings(search, params);
     setShowAdvancedSearch(false);
+  };
+
+  const handleMessageSeller = (listing: FoodListing) => {
+    setSelectedListing(listing);
+  };
+
+  const sendMessage = async () => {
+    if (!selectedListing || !newMessage.trim() || !user) return;
+
+    const postedByUsername = selectedListing.postedBy;
+    const listingId = selectedListing._id;
+
+    console.log("Sending message for listing:", {
+      content: newMessage,
+      postedByUsername,
+      listingId
+    });
+
+    if (!postedByUsername || !listingId) {
+      console.error("Invalid postedByUsername or listingId");
+      alert("Invalid recipient or listing information. Unable to send message.");
+      return;
+    }
+
+    try {
+      // First, fetch the recipient's user ID
+      const userResponse = await fetch(`/api/users?username=${postedByUsername}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (!userResponse.ok) {
+        throw new Error("Failed to fetch recipient user information");
+      }
+
+      const userData = await userResponse.json();
+      if (!userData || !userData.id) {
+        throw new Error("Invalid recipient user data");
+      }
+
+      const recipientId = userData.id;
+
+      // Now send the message with the correct recipient ID
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          content: newMessage,
+          recipientId,
+          listingId,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setNewMessage("");
+        setSelectedListing(null);
+        router.push(`/messages?conversationId=${data.conversation._id}`);
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to send message:", errorData.error);
+        alert(`Failed to send message: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+      alert("An error occurred while sending the message");
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -147,6 +222,9 @@ const FoodListings: React.FC = () => {
               <p>Location: {listing.location}</p>
               <p>Posted: {new Date(listing.createdAt).toLocaleString()}</p>
               <p>Posted By: {listing.postedBy}</p>
+              <Button onClick={() => handleMessageSeller(listing)} className="mt-2">
+                Message Seller
+              </Button>
             </li>
           ))}
         </ul>
@@ -162,6 +240,27 @@ const FoodListings: React.FC = () => {
               <DialogTitle>Create New Food Listing</DialogTitle>
             </DialogHeader>
             <CreateListingForm onListingCreated={fetchListings} />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {selectedListing && (
+        <Dialog open={!!selectedListing} onOpenChange={() => setSelectedListing(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Message Seller</DialogTitle>
+            </DialogHeader>
+            <div>
+              <p>Listing: {selectedListing.foodType}</p>
+              <Input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type your message..."
+                className="mb-2"
+              />
+              <Button onClick={sendMessage}>Send Message</Button>
+            </div>
           </DialogContent>
         </Dialog>
       )}
