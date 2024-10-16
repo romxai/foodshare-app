@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import CreateListingForm from "@/components/CreateListingForm";
 import { getCurrentUser } from "../lib/auth";
-import MessageSystem from "./MessageSystem";
+import { useRouter } from "next/navigation";
 
 const FoodListings: React.FC = () => {
   const [listings, setListings] = useState<FoodListing[]>([]);
@@ -23,9 +23,11 @@ const FoodListings: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
-  const [selectedListingId, setSelectedListingId] = useState<string | null>(
+  const [selectedListing, setSelectedListing] = useState<FoodListing | null>(
     null
   );
+  const [newMessage, setNewMessage] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -45,13 +47,18 @@ const FoodListings: React.FC = () => {
       const queryParams = new URLSearchParams({
         search: searchTerm,
         ...advancedParams,
+        userId: user?.id || "",
       });
       const response = await fetch(`/api/listings?${queryParams}`);
       if (!response.ok) {
         throw new Error("Failed to fetch listings");
       }
       const data = await response.json();
-      setListings(data);
+      // Filter out user's own listings on the client side
+      const filteredListings = data.filter(
+        (listing: FoodListing) => listing.postedBy !== user?.id
+      );
+      setListings(filteredListings);
     } catch (error) {
       console.error("Error fetching listings:", error);
       setError("Failed to fetch listings. Please try again.");
@@ -61,8 +68,10 @@ const FoodListings: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchListings();
-  }, []);
+    if (user) {
+      fetchListings();
+    }
+  }, [user]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,6 +81,68 @@ const FoodListings: React.FC = () => {
   const handleAdvancedSearch = (params: any) => {
     fetchListings(search, params);
     setShowAdvancedSearch(false);
+  };
+
+  const handleMessageSeller = (listing: FoodListing) => {
+    setSelectedListing(listing);
+  };
+
+  const sendMessage = async () => {
+    if (!selectedListing || !newMessage.trim() || !user) return;
+
+    try {
+      console.log("Sending message:", {
+        content: newMessage,
+        recipientId: selectedListing.postedBy,
+        listingId: selectedListing._id,
+      });
+
+      // Fetch the recipient's ID based on their username
+      const userResponse = await fetch(
+        `/api/users?username=${selectedListing.postedBy}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (!userResponse.ok) {
+        throw new Error("Failed to fetch recipient user information");
+      }
+
+      const userData = await userResponse.json();
+      if (!userData || !userData.id) {
+        throw new Error("Invalid recipient user data");
+      }
+
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          content: newMessage,
+          recipientId: userData.id,
+          listingId: selectedListing._id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setNewMessage("");
+        setSelectedListing(null);
+        router.push(`/messages?conversationId=${data.conversation._id}`);
+      } else {
+        console.error("Failed to send message:", data.error, data.details);
+        alert(`Failed to send message: ${data.error}. ${data.details || ""}`);
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+      alert("An error occurred while sending the message. Please try again.");
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -146,26 +217,15 @@ const FoodListings: React.FC = () => {
               <p>Location: {listing.location}</p>
               <p>Posted: {new Date(listing.createdAt).toLocaleString()}</p>
               <p>Posted By: {listing.postedBy}</p>
-              <Button onClick={() => setSelectedListingId(listing._id)}>
-                Contact Seller
+              <Button
+                onClick={() => handleMessageSeller(listing)}
+                className="mt-2"
+              >
+                Message Seller
               </Button>
             </li>
           ))}
         </ul>
-      )}
-
-      {selectedListingId && (
-        <Dialog
-          open={!!selectedListingId}
-          onOpenChange={() => setSelectedListingId(null)}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Message Seller</DialogTitle>
-            </DialogHeader>
-            <MessageSystem listingId={selectedListingId} />
-          </DialogContent>
-        </Dialog>
       )}
 
       {user && (
@@ -178,6 +238,30 @@ const FoodListings: React.FC = () => {
               <DialogTitle>Create New Food Listing</DialogTitle>
             </DialogHeader>
             <CreateListingForm onListingCreated={fetchListings} />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {selectedListing && (
+        <Dialog
+          open={!!selectedListing}
+          onOpenChange={() => setSelectedListing(null)}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Message Seller</DialogTitle>
+            </DialogHeader>
+            <div>
+              <p>Listing: {selectedListing.foodType}</p>
+              <Input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type your message..."
+                className="mb-2"
+              />
+              <Button onClick={sendMessage}>Send Message</Button>
+            </div>
           </DialogContent>
         </Dialog>
       )}

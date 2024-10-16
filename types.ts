@@ -12,7 +12,7 @@ export interface FoodListing {
   quantity: string;
   expiration: string;
   location: string;
-  postedBy: string;
+  postedBy: string; // This might be storing a username instead of an ID
   createdAt: string;
   updatedAt: string;
 }
@@ -20,12 +20,34 @@ export interface FoodListing {
 // ... other types
 
 export interface Message {
-  id: string;
-  listingId: string;
-  senderId: string;
-  senderName: string;
-  recipientId: string;
-  recipientName: string;
+  _id: string;
+  conversationId: string;
+  sender: string;
+  recipient: string;
   content: string;
   timestamp: string;
+  read: boolean;
+}
+
+export interface Conversation {
+  _id: string;
+  participants: string[];
+  listingId: string;
+  createdAt: string;
+  updatedAt: string;
+  lastMessage?: {
+    content: string;
+    timestamp: string;
+  };
+  otherUser?: {
+    _id: string;
+    name: string;
+  };
+}
+
+export interface ConversationWithOtherUser extends Conversation {
+  otherUser: {
+    _id: string;
+    name: string;
+  };
 }
