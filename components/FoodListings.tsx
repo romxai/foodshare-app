@@ -12,9 +12,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import CreateListingForm from "@/components/CreateListingForm";
-import { getCurrentUser } from "../lib/auth";
-import { useRouter } from "next/navigation";
+import dynamic from 'next/dynamic';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { getCurrentUser } from "@/lib/auth";
+
+const CreateListingForm = dynamic(() => import('@/components/CreateListingForm'), {
+  ssr: false,
+});
 
 const FoodListings: React.FC = () => {
   const [listings, setListings] = useState<FoodListing[]>([]);
@@ -174,6 +179,35 @@ const FoodListings: React.FC = () => {
     }
   };
 
+  const FoodListing = ({ listing }: { listing: FoodListing }) => {
+    return (
+      <div>
+        <h3 className="font-bold">{listing.foodType}</h3>
+        <p>{listing.description}</p>
+        <p>Quantity: {listing.quantity}</p>
+        <p>Expiration: {formatDate(listing.expiration)}</p>
+        <p>Location: {listing.location}</p>
+        <p>Posted: {new Date(listing.createdAt).toLocaleString()}</p>
+        <p>Posted By: {listing.postedBy}</p>
+        <Button
+          onClick={() => handleMessageSeller(listing)}
+          className="mt-2"
+        >
+          Message Seller
+        </Button>
+        
+        {listing.imagePath && (
+          <Image 
+            src={`/${listing.imagePath}`} 
+            alt={listing.foodType} 
+            width={200} 
+            height={200}
+          />
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="container mx-auto px-4">
       <h1 className="text-2xl font-bold mb-4">Food Listings</h1>
@@ -210,19 +244,7 @@ const FoodListings: React.FC = () => {
         <ul>
           {listings.map((listing) => (
             <li key={listing._id} className="mb-4 p-4 border rounded">
-              <h3 className="font-bold">{listing.foodType}</h3>
-              <p>{listing.description}</p>
-              <p>Quantity: {listing.quantity}</p>
-              <p>Expiration: {formatDate(listing.expiration)}</p>
-              <p>Location: {listing.location}</p>
-              <p>Posted: {new Date(listing.createdAt).toLocaleString()}</p>
-              <p>Posted By: {listing.postedBy}</p>
-              <Button
-                onClick={() => handleMessageSeller(listing)}
-                className="mt-2"
-              >
-                Message Seller
-              </Button>
+              <FoodListing listing={listing} />
             </li>
           ))}
         </ul>

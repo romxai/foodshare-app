@@ -5,6 +5,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { getCurrentUser } from "../lib/auth";
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 interface CreateListingFormProps {
   onListingCreated: () => void;
@@ -27,6 +29,7 @@ export default function CreateListingForm({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -56,6 +59,14 @@ export default function CreateListingForm({
     }));
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      console.log("Image selected:", file.name, "Size:", file.size, "bytes");
+      setFormData(prev => ({ ...prev, image: file }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -75,23 +86,28 @@ export default function CreateListingForm({
       // Combine date and time for expiration
       const expiration = new Date(`${formData.expirationDate}T${formData.expirationTime}`);
 
-      const dataToSend = {
-        foodType: formData.foodType,
-        description: formData.description,
-        quantity: `${formData.quantity} ${formData.quantityUnit}`,
-        expiration: expiration.toISOString(),
-        location: formData.location,
-        source: formData.source,
-      };
+      const formDataToSend = new FormData();
+      formDataToSend.append('foodType', formData.foodType);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('quantity', `${formData.quantity} ${formData.quantityUnit}`);
+      formDataToSend.append('expiration', expiration.toISOString());
+      formDataToSend.append('location', formData.location);
+      formDataToSend.append('source', formData.source);
+
+      if (formData.image) {
+        console.log("Appending image to form data:", formData.image.name);
+        formDataToSend.append('image', formData.image);
+      } else {
+        console.log("No image selected");
+      }
 
       console.log("Sending request to create listing...");
       const response = await fetch("/api/listings", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(dataToSend),
+        body: formDataToSend,
       });
 
       console.log("Response status:", response.status);
@@ -224,6 +240,15 @@ export default function CreateListingForm({
           value={formData.location}
           onChange={handleChange}
           required
+        />
+      </div>
+      <div>
+        <label htmlFor="image">Image:</label>
+        <input
+          type="file"
+          id="image"
+          accept="image/*"
+          onChange={handleImageChange}
         />
       </div>
       {error && <p className="text-red-500">{error}</p>}
