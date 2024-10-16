@@ -274,7 +274,7 @@ export default function CreateListingForm({
                 alt={`Preview ${index + 1}`}
                 width={100}
                 height={100}
-                objectFit="cover"
+                style={{ objectFit: 'cover' }}
               />
               <button
                 type="button"

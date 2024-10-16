@@ -102,8 +102,8 @@ export async function GET(request: Request) {
               location: 1,
               createdAt: 1,
               updatedAt: 1,
-              imagePaths: 1, // Make sure this line is present
-              postedBy: { $arrayElemAt: ["$userDetails.name", 0] },
+              imagePaths: 1,
+              postedBy: { $toString: "$postedBy" }, // Convert ObjectId to string
             },
           },
         ])
@@ -176,10 +176,12 @@ export async function POST(req: Request) {
       ...data,
       expiration,
       imagePaths,
-      postedBy: new ObjectId(user.id),
+      postedBy: user.id, // Make sure this is the user ID, not the ObjectId
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+
+    console.log("New listing:", newListing); // Add this log
 
     const result = await db.collection("foodlistings").insertOne(newListing);
 

@@ -59,12 +59,16 @@ const FoodListings: React.FC = () => {
         throw new Error("Failed to fetch listings");
       }
       const data = await response.json();
-      //console.log("Fetched listings:", data); // Add this line to log the fetched data
-      // Filter out user's own listings on the client side
-      const filteredListings = data.filter(
-        (listing: FoodListing) => listing.postedBy !== user?.id
-      );
-      setListings(filteredListings);
+      console.log("Fetched listings:", data);
+      const processedListings = data.map((listing: FoodListing) => {
+        const isOwnListing = listing.postedBy === user?.id;
+        console.log(`Listing ${listing._id} - postedBy: ${listing.postedBy}, user.id: ${user?.id}, isOwnListing: ${isOwnListing}`);
+        return {
+          ...listing,
+          isOwnListing
+        };
+      });
+      setListings(processedListings);
     } catch (error) {
       console.error("Error fetching listings:", error);
       setError("Failed to fetch listings. Please try again.");
@@ -181,7 +185,10 @@ const FoodListings: React.FC = () => {
   };
 
   const FoodListing = ({ listing }: { listing: FoodListing }) => {
-    //console.log("Rendering listing:", listing);
+    console.log("Listing postedBy:", listing.postedBy);
+    console.log("Current user ID:", user?.id);
+    const isOwnListing = listing.postedBy === user?.id;
+    console.log("Is own listing:", isOwnListing);
 
     return (
       <div>
@@ -201,7 +208,7 @@ const FoodListings: React.FC = () => {
                 alt={`${listing.foodType} - Image ${index + 1}`}
                 width={100}
                 height={100}
-                objectFit="cover"
+                style={{ objectFit: 'cover' }}
                 loading="lazy"
                 onError={() => {
                   console.error(`Error loading image ${index + 1} for ${listing.foodType}`);
@@ -213,8 +220,9 @@ const FoodListings: React.FC = () => {
         <Button
           onClick={() => handleMessageSeller(listing)}
           className="mt-2"
+          disabled={isOwnListing}
         >
-          Message Seller
+          {isOwnListing ? "Your Listing" : "Message Seller"}
         </Button>
       </div>
     );
