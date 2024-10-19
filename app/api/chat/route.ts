@@ -23,27 +23,36 @@ export async function GET(request: Request) {
     const { db } = await connectToDatabase();
 
     if (conversationId) {
-      // Fetch messages for a specific conversation
+      let conversation = await db.collection("conversations").findOne({
+        _id: new ObjectId(conversationId),
+        participants: new ObjectId(user.id)
+      });
+
+      if (!conversation) {
+        // If conversation not found, check if it's a user ID
+        conversation = await db.collection("conversations").findOne({
+          participants: { $all: [new ObjectId(user.id), new ObjectId(conversationId)] }
+        });
+
+        if (!conversation) {
+          // If still not found, create a new conversation
+          const newConversation = {
+            participants: [new ObjectId(user.id), new ObjectId(conversationId)],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+          const result = await db.collection("conversations").insertOne(newConversation);
+          conversation = { ...newConversation, _id: result.insertedId };
+        }
+      }
+
       const messages = await db
         .collection("messages")
-        .find({
-          $or: [
-            {
-              sender: new ObjectId(user.id),
-              recipient: new ObjectId(conversationId),
-            },
-            {
-              sender: new ObjectId(conversationId),
-              recipient: new ObjectId(user.id),
-            },
-          ],
-        })
+        .find({ conversationId: conversation._id })
         .sort({ timestamp: 1 })
         .toArray();
 
-      //console.log("Fetched messages:", messages); // Add this line
-
-      return NextResponse.json(messages);
+      return NextResponse.json({ conversation, messages });
     } else {
       // Fetch all conversations
       const conversations = await db
@@ -123,49 +132,36 @@ export async function POST(request: Request) {
     const { db } = await connectToDatabase();
     const { content, conversationId, recipientId, listingId } = await request.json();
 
-    console.log("Received data:", { content, conversationId, recipientId, listingId });
-
-    let conversation: any;
+    let conversation;
 
     if (conversationId) {
-      console.log("Searching for existing conversation with ID:", conversationId);
-      conversation = await db.collection("conversations").findOne({ _id: new ObjectId(conversationId) });
-      
-      if (!conversation) {
-        console.log("Conversation not found by ID, searching by participants");
-        conversation = await db.collection("conversations").findOne({
-          participants: { $all: [new ObjectId(user.id), new ObjectId(conversationId)] }
-        });
-      }
-
-      if (!conversation) {
-        console.log("Conversation not found");
-        return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
-      }
-      console.log("Found conversation:", conversation);
-    } else if (recipientId && listingId) {
-      console.log("Creating new conversation");
+      // Existing conversation
       conversation = await db.collection("conversations").findOne({
-        participants: {
-          $all: [new ObjectId(user.id), new ObjectId(recipientId)],
-        },
-        listingId: new ObjectId(listingId),
+        _id: new ObjectId(conversationId),
+        participants: new ObjectId(user.id)
       });
 
       if (!conversation) {
+        return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
+      }
+    } else if (recipientId) {
+      // Check for existing conversation between these users
+      conversation = await db.collection("conversations").findOne({
+        participants: { $all: [new ObjectId(user.id), new ObjectId(recipientId)] }
+      });
+
+      if (!conversation) {
+        // Create a new conversation only if one doesn't exist
         const newConversation = {
           participants: [new ObjectId(user.id), new ObjectId(recipientId)],
-          listingId: new ObjectId(listingId),
+          listingId: listingId ? new ObjectId(listingId) : null,
           createdAt: new Date(),
           updatedAt: new Date(),
         };
-        const result = await db
-          .collection("conversations")
-          .insertOne(newConversation);
+        const result = await db.collection("conversations").insertOne(newConversation);
         conversation = { ...newConversation, _id: result.insertedId };
       }
     } else {
-      console.log("Invalid request parameters");
       return NextResponse.json({ error: "Invalid request parameters" }, { status: 400 });
     }
 
@@ -178,24 +174,20 @@ export async function POST(request: Request) {
       read: false,
     };
 
-    console.log("Inserting new message:", newMessage);
     const messageResult = await db.collection("messages").insertOne(newMessage);
 
-    console.log("Updating conversation with new message");
     await db.collection("conversations").updateOne(
       { _id: conversation._id },
       { $set: { lastMessage: { content, timestamp: new Date() }, updatedAt: new Date() } }
     );
 
-    console.log("Message sent successfully");
     return NextResponse.json({
       conversation,
       message: { ...newMessage, _id: messageResult.insertedId }
     }, { status: 201 });
   } catch (error: unknown) {
     console.error("Error creating conversation or sending message:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "An unexpected error occurred";
+    const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
     return NextResponse.json(
       { error: "An unexpected error occurred", details: errorMessage },
       { status: 500 }

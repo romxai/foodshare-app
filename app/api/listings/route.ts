@@ -18,7 +18,10 @@ export async function GET(request: Request) {
         .findOne({ _id: new ObjectId(listingId) });
 
       if (!listing) {
-        return NextResponse.json({ error: "Listing not found" }, { status: 404 });
+        return NextResponse.json(
+          { error: "Listing not found" },
+          { status: 404 }
+        );
       }
 
       const formattedListing = {
@@ -51,7 +54,7 @@ export async function GET(request: Request) {
       const { db } = await connectToDatabase();
 
       const query: any = {
-        expiration: { $gt: new Date() } // Only show non-expired listings
+        expiration: { $gt: new Date() }, // Only show non-expired listings
       };
 
       if (search) {
@@ -88,10 +91,12 @@ export async function GET(request: Request) {
           {
             $lookup: {
               from: "users",
-              localField: "postedBy",
-              foreignField: "_id",
-              as: "userDetails",
-            },
+              let: { postedById: { $toObjectId: "$postedBy" } },
+              pipeline: [
+                { $match: { $expr: { $eq: ["$_id", "$$postedById"] } } }
+              ],
+              as: "userDetails"
+            }
           },
           {
             $project: {
@@ -103,7 +108,8 @@ export async function GET(request: Request) {
               createdAt: 1,
               updatedAt: 1,
               imagePaths: 1,
-              postedBy: { $toString: "$postedBy" }, // Convert ObjectId to string
+              postedBy: { $arrayElemAt: ["$userDetails.name", 0] },
+              postedById: "$postedBy", // This should be the original user ID
             },
           },
         ])
@@ -158,12 +164,12 @@ export async function POST(req: Request) {
         const buffer = await file.arrayBuffer();
         const filename = Date.now() + "-" + file.name;
         const uploadDir = path.join(process.cwd(), "public", "uploads");
-        
+
         await ensureDirectoryExists(uploadDir);
-        
+
         const imagePath = `/uploads/${filename}`;
         const filePath = path.join(uploadDir, filename);
-        
+
         await fs.writeFile(filePath, Buffer.from(buffer));
         imagePaths.push(imagePath);
       }
@@ -176,12 +182,12 @@ export async function POST(req: Request) {
       ...data,
       expiration,
       imagePaths,
-      postedBy: user.id, // Make sure this is the user ID, not the ObjectId
+      postedBy: user.id, // This is correct, we're storing the user ID as a string
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    console.log("New listing:", newListing); // Add this log
+    console.log("New listing:", newListing);
 
     const result = await db.collection("foodlistings").insertOne(newListing);
 
@@ -196,9 +202,9 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Error creating listing:", error);
     return NextResponse.json(
-      { 
-        error: "Internal Server Error", 
-        details: error instanceof Error ? error.message : String(error)
+      {
+        error: "Internal Server Error",
+        details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );

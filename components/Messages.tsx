@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { getCurrentUser } from "../lib/auth";
 import { User, Message, Conversation } from "../types";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -17,6 +17,7 @@ const Messages: React.FC = () => {
   const [newMessage, setNewMessage] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -44,6 +45,20 @@ const Messages: React.FC = () => {
       fetchMessages(conversationId);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (selectedConversation) {
+      const interval = setInterval(() => {
+        fetchMessages(selectedConversation);
+      }, 5000); // Poll every 5 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [selectedConversation]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const fetchAvailableUsers = async () => {
     try {
@@ -95,7 +110,15 @@ const Messages: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         console.log("Fetched messages:", data);
-        setMessages(data);
+        if (data.conversation) {
+          setSelectedConversation(data.conversation._id);
+          setMessages(data.messages);
+        } else {
+          setMessages([]);
+        }
+      } else if (response.status === 404) {
+        console.log("No messages found for this conversation");
+        setMessages([]);
       } else {
         console.error("Failed to fetch messages:", response.statusText);
       }
@@ -129,13 +152,6 @@ const Messages: React.FC = () => {
     e.preventDefault();
     if (!newMessage.trim() || !selectedConversation || !currentUser) return;
 
-    console.log("Selected Conversation ID:", selectedConversation);
-    console.log("Attempting to send message:", {
-      content: newMessage,
-      conversationId: selectedConversation,
-      currentUser: currentUser.id,
-    });
-
     try {
       const response = await fetch(`/api/chat`, {
         method: "POST",
@@ -149,9 +165,7 @@ const Messages: React.FC = () => {
         }),
       });
 
-      console.log("Response status:", response.status);
       const data = await response.json();
-      console.log("Response data:", data);
 
       if (response.ok) {
         setMessages((prevMessages) => [...prevMessages, data.message]);
@@ -160,7 +174,6 @@ const Messages: React.FC = () => {
       } else {
         console.error("Failed to send message:", data.error);
         if (response.status === 404) {
-          console.log("Conversation not found, fetching conversations again");
           await fetchConversations();
           alert("The conversation could not be found. Please try selecting it again.");
         } else {
@@ -177,6 +190,7 @@ const Messages: React.FC = () => {
     console.log("Selected conversation:", conversationId);
     setSelectedConversation(conversationId);
     fetchMessages(conversationId);
+    router.push(`/messages?conversationId=${conversationId}`);
   };
 
   if (!currentUser) {
@@ -228,14 +242,12 @@ const Messages: React.FC = () => {
                 <div
                   key={message._id}
                   className={`mb-4 ${
-                    message.sender === currentUser.id
-                      ? "text-right"
-                      : "text-left"
+                    message.sender === currentUser?.id ? "text-right" : "text-left"
                   }`}
                 >
                   <div
                     className={`inline-block p-2 rounded-lg ${
-                      message.sender === currentUser.id
+                      message.sender === currentUser?.id
                         ? "bg-blue-500 text-white"
                         : "bg-gray-200"
                     }`}
@@ -247,6 +259,7 @@ const Messages: React.FC = () => {
                   </div>
                 </div>
               ))}
+              <div ref={messagesEndRef} />
             </div>
             <form onSubmit={sendMessage} className="p-4 border-t">
               <input

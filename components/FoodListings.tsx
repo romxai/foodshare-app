@@ -12,14 +12,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import dynamic from 'next/dynamic';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import dynamic from "next/dynamic";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 
-const CreateListingForm = dynamic(() => import('@/components/CreateListingForm'), {
-  ssr: false,
-});
+const CreateListingForm = dynamic(
+  () => import("@/components/CreateListingForm"),
+  {
+    ssr: false,
+  }
+);
 
 const FoodListings: React.FC = () => {
   const [listings, setListings] = useState<FoodListing[]>([]);
@@ -62,10 +65,12 @@ const FoodListings: React.FC = () => {
       console.log("Fetched listings:", data);
       const processedListings = data.map((listing: FoodListing) => {
         const isOwnListing = listing.postedBy === user?.id;
-        console.log(`Listing ${listing._id} - postedBy: ${listing.postedBy}, user.id: ${user?.id}, isOwnListing: ${isOwnListing}`);
+        console.log(
+          `Listing ${listing._id} - postedBy: ${listing.postedBy}, user.id: ${user?.id}, isOwnListing: ${isOwnListing}`
+        );
         return {
           ...listing,
-          isOwnListing
+          isOwnListing,
         };
       });
       setListings(processedListings);
@@ -101,31 +106,7 @@ const FoodListings: React.FC = () => {
     if (!selectedListing || !newMessage.trim() || !user) return;
 
     try {
-      //  console.log("Sending message:", {
-      //  content: newMessage,
-      //  recipientId: selectedListing.postedBy,
-      //  listingId: selectedListing._id,
-      //  });
-
-      // Fetch the recipient's ID based on their username
-      const userResponse = await fetch(
-        `/api/users?username=${selectedListing.postedBy}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
-      if (!userResponse.ok) {
-        throw new Error("Failed to fetch recipient user information");
-      }
-
-      const userData = await userResponse.json();
-      if (!userData || !userData.id) {
-        throw new Error("Invalid recipient user data");
-      }
-
+      console.log("Sending message to:", selectedListing.postedBy);
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
@@ -134,7 +115,7 @@ const FoodListings: React.FC = () => {
         },
         body: JSON.stringify({
           content: newMessage,
-          recipientId: userData.id,
+          recipientId: selectedListing.postedById, // Use postedById instead of postedBy
           listingId: selectedListing._id,
         }),
       });
@@ -185,7 +166,7 @@ const FoodListings: React.FC = () => {
   };
 
   const FoodListing = ({ listing }: { listing: FoodListing }) => {
-    console.log("Listing postedBy:", listing.postedBy);
+    console.log("Listing:", listing);
     console.log("Current user ID:", user?.id);
     const isOwnListing = listing.postedBy === user?.id;
     console.log("Is own listing:", isOwnListing);
@@ -198,20 +179,22 @@ const FoodListings: React.FC = () => {
         <p>Expiration: {formatDate(listing.expiration)}</p>
         <p>Location: {listing.location}</p>
         <p>Posted: {new Date(listing.createdAt).toLocaleString()}</p>
-        <p>Posted By: {listing.postedBy}</p>
+        <p>Posted By: {listing.postedBy || "Unknown"}</p>
         {listing.imagePaths && listing.imagePaths.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-2">
             {listing.imagePaths.map((path, index) => (
               <Image
                 key={index}
-                src={path.startsWith('/') ? path : `/${path}`}
+                src={path.startsWith("/") ? path : `/${path}`}
                 alt={`${listing.foodType} - Image ${index + 1}`}
                 width={100}
                 height={100}
-                style={{ objectFit: 'cover' }}
+                style={{ objectFit: "cover" }}
                 loading="lazy"
                 onError={() => {
-                  console.error(`Error loading image ${index + 1} for ${listing.foodType}`);
+                  console.error(
+                    `Error loading image ${index + 1} for ${listing.foodType}`
+                  );
                 }}
               />
             ))}
