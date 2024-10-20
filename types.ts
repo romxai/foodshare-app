@@ -10,6 +10,8 @@ export interface FoodListing {
   foodType: string;
   description: string;
   quantity: string;
+  quantityType: string;
+  quantityUnit: string;
   expiration: string;
   location: string;
   postedBy: string;

@@ -95,7 +95,7 @@ const UserActivity: React.FC<UserActivityProps> = ({ user }) => {
                     </span>
                   </div>
                   <p className="text-gray-600 mt-1">{post.description}</p>
-                  <p className="mt-2"><span className="font-semibold">Quantity:</span> {post.quantity}</p>
+                  <p className="mt-2"><span className="font-semibold">Quantity:</span> {post.quantity} {post.quantityUnit}</p>
                   <p><span className="font-semibold">Expiration:</span> {formatDate(post.expiration)}</p>
                   <p><span className="font-semibold">Location:</span> {post.location}</p>
                   <p className="text-sm text-gray-500 mt-2">Posted: {new Date(post.createdAt).toLocaleString()}</p>

@@ -103,13 +103,14 @@ export async function GET(request: Request) {
               foodType: 1,
               description: 1,
               quantity: 1,
+              quantityUnit: 1, // Make sure this line is present
               expiration: 1,
               location: 1,
               createdAt: 1,
               updatedAt: 1,
               imagePaths: 1,
               postedBy: { $arrayElemAt: ["$userDetails.name", 0] },
-              postedById: "$postedBy", // This should be the original user ID
+              postedById: "$postedBy",
             },
           },
         ])

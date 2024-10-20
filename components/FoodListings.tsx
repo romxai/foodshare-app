@@ -175,7 +175,7 @@ const FoodListings: React.FC = () => {
       <div>
         <h3 className="font-bold">{listing.foodType}</h3>
         <p>{listing.description}</p>
-        <p>Quantity: {listing.quantity}</p>
+        <p>Quantity: {listing.quantity} {listing.quantityUnit}</p>
         <p>Expiration: {formatDate(listing.expiration)}</p>
         <p>Location: {listing.location}</p>
         <p>Posted: {new Date(listing.createdAt).toLocaleString()}</p>
