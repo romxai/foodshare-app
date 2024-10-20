@@ -10,6 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Send, Menu, ChevronDown } from "lucide-react";
+import Sidebar from "@/components/Sidebar";
 
 export default function Messages() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -229,6 +230,11 @@ export default function Messages() {
     }
   }, []);
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    router.push("/login");
+  };
+
   if (!currentUser) {
     return (
       <div className="flex items-center justify-center h-screen text-white">
@@ -239,133 +245,136 @@ export default function Messages() {
 
   return (
     <div className="flex h-screen bg-gray-900 text-gray-100">
-      <div className="w-1/3 border-r border-gray-800">
-        <div className="p-4">
-          <h2 className="text-xl font-bold text-green-400">Conversations</h2>
-        </div>
-        <ScrollArea className="h-[calc(100vh-5rem)]">
-          {conversations.map((conv) => (
-            <div key={conv._id}>
-              <div
-                className={`p-4 cursor-pointer hover:bg-gray-800 transition-colors ${
-                  selectedConversation === conv._id ? "bg-gray-800" : ""
-                }`}
-                onClick={() => handleConversationSelect(conv._id)}
-              >
-                <div className="flex items-center space-x-4">
-                  <Avatar>
-                    <AvatarImage src="" alt={conv.otherUser?.name} />
-                    <AvatarFallback className="bg-gray-700">
-                      {conv.otherUser?.name?.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate text-gray-200">
-                      {conv.otherUser?.name || "Unknown User"}
-                    </p>
-                    <p className="text-sm text-gray-400 truncate">
-                      {conv.lastMessage?.content || "No messages"}
-                    </p>
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {conv.lastMessage?.timestamp
-                      ? formatDate(conv.lastMessage.timestamp)
-                      : "No timestamp"}
+      <Sidebar onLogout={handleLogout} />
+      <div className="flex-1 flex">
+        <div className="w-1/3 border-r border-gray-800">
+          <div className="p-4">
+            <h2 className="text-xl font-bold text-green-400">Conversations</h2>
+          </div>
+          <ScrollArea className="h-[calc(100vh-5rem)]">
+            {conversations.map((conv) => (
+              <div key={conv._id}>
+                <div
+                  className={`p-4 cursor-pointer hover:bg-gray-800 transition-colors ${
+                    selectedConversation === conv._id ? "bg-gray-800" : ""
+                  }`}
+                  onClick={() => handleConversationSelect(conv._id)}
+                >
+                  <div className="flex items-center space-x-4">
+                    <Avatar>
+                      <AvatarImage src="" alt={conv.otherUser?.name} />
+                      <AvatarFallback className="bg-gray-700">
+                        {conv.otherUser?.name?.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate text-gray-200">
+                        {conv.otherUser?.name || "Unknown User"}
+                      </p>
+                      <p className="text-sm text-gray-400 truncate">
+                        {conv.lastMessage?.content || "No messages"}
+                      </p>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {conv.lastMessage?.timestamp
+                        ? formatDate(conv.lastMessage.timestamp)
+                        : "No timestamp"}
+                    </div>
                   </div>
                 </div>
+                <Separator className="bg-gray-800" />
               </div>
-              <Separator className="bg-gray-800" />
-            </div>
-          ))}
-        </ScrollArea>
-      </div>
-      <div className="w-2/3 flex flex-col">
-        {selectedConversation ? (
-          <>
-            <ScrollArea
-              className="flex-1 p-4"
-              ref={scrollAreaRef}
-              onScroll={handleScroll}
-            >
-              {Object.entries(groupMessagesByDate(messages)).map(
-                ([date, dateMessages]) => (
-                  <div key={date}>
-                    <div className="text-center my-4">
-                      <span className="bg-gray-800 text-gray-300 px-2 py-1 rounded-full text-sm">
-                        {formatDate(date)}
-                      </span>
-                    </div>
-                    {dateMessages.map((message) => (
-                      <div
-                        key={message._id}
-                        className={`mb-4 flex ${
-                          message.sender === currentUser?.id
-                            ? "justify-end"
-                            : "justify-start"
-                        }`}
-                      >
+            ))}
+          </ScrollArea>
+        </div>
+        <div className="w-2/3 flex flex-col">
+          {selectedConversation ? (
+            <>
+              <ScrollArea
+                className="flex-1 p-4"
+                ref={scrollAreaRef}
+                onScroll={handleScroll}
+              >
+                {Object.entries(groupMessagesByDate(messages)).map(
+                  ([date, dateMessages]) => (
+                    <div key={date}>
+                      <div className="text-center my-4">
+                        <span className="bg-gray-800 text-gray-300 px-2 py-1 rounded-full text-sm">
+                          {formatDate(date)}
+                        </span>
+                      </div>
+                      {dateMessages.map((message) => (
                         <div
-                          className={`max-w-[70%] min-w-[200px] p-3 rounded-lg ${
+                          key={message._id}
+                          className={`mb-4 flex ${
                             message.sender === currentUser?.id
-                              ? "bg-green-800 text-white" // Darker green for sender (current user)
-                              : "bg-gray-700 text-gray-100" // Grey-ish for receiver's messages
+                              ? "justify-end"
+                              : "justify-start"
                           }`}
                         >
-                          <p className="break-words">{message.content}</p>
-                          <p className="text-xs text-gray-300 mt-1 text-right">
-                            {formatTime(message.timestamp)}
-                          </p>
+                          <div
+                            className={`max-w-[70%] min-w-[200px] p-3 rounded-lg ${
+                              message.sender === currentUser?.id
+                                ? "bg-green-800 text-white" // Darker green for sender (current user)
+                                : "bg-gray-700 text-gray-100" // Grey-ish for receiver's messages
+                            }`}
+                          >
+                            <p className="break-words">{message.content}</p>
+                            <p className="text-xs text-gray-300 mt-1 text-right">
+                              {formatTime(message.timestamp)}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )
-              )}
-              <div ref={messagesEndRef} />
-            </ScrollArea>
-            {showJumpToBottom && (
-              <Button
-                className="absolute bottom-20 right-4 rounded-full p-2 bg-primary text-white hover:bg-primary/80"
-                onClick={() => {
-                  scrollToBottom();
-                  setHasUserScrolled(false);
-                }}
-              >
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            )}
-            <form
-              onSubmit={sendMessage}
-              className="p-4 border-t border-gray-800"
-            >
-              <div className="flex space-x-2">
-                <textarea
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="flex-1 bg-gray-700 text-gray-100 border-gray-600 focus:border-green-400 rounded-md p-2 resize-none"
-                  placeholder="Type a message..."
-                  rows={5}
-                  style={{ minHeight: "5rem", maxHeight: "15rem" }}
-                />
+                      ))}
+                    </div>
+                  )
+                )}
+                <div ref={messagesEndRef} />
+              </ScrollArea>
+              {showJumpToBottom && (
                 <Button
-                  type="submit"
-                  size="icon"
-                  variant="ghost"
-                  className="text-green-400 hover:text-green-300"
+                  className="absolute bottom-20 right-4 rounded-full p-2 bg-primary text-white hover:bg-primary/80"
+                  onClick={() => {
+                    scrollToBottom();
+                    setHasUserScrolled(false);
+                  }}
                 >
-                  <Send className="h-4 w-4" />
+                  <ChevronDown className="h-4 w-4" />
                 </Button>
-              </div>
-            </form>
-          </>
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-gray-400">
-              Select a conversation to start chatting
-            </p>
-          </div>
-        )}
+              )}
+              <form
+                onSubmit={sendMessage}
+                className="p-4 border-t border-gray-800"
+              >
+                <div className="flex space-x-2">
+                  <textarea
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="flex-1 bg-gray-700 text-gray-100 border-gray-600 focus:border-green-400 rounded-md p-2 resize-none"
+                    placeholder="Type a message..."
+                    rows={5}
+                    style={{ minHeight: "5rem", maxHeight: "15rem" }}
+                  />
+                  <Button
+                    type="submit"
+                    size="icon"
+                    variant="ghost"
+                    className="text-green-400 hover:text-green-300"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              </form>
+            </>
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-gray-400">
+                Select a conversation to start chatting
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

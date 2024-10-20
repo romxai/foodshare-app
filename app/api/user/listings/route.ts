@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
-import { ObjectId } from "mongodb";
 import { verifyToken } from "@/lib/auth";
 
 export async function GET(request: Request) {
@@ -18,27 +17,14 @@ export async function GET(request: Request) {
 
   try {
     const { db } = await connectToDatabase();
-
-    const listings = await db
-      .collection("foodlistings")
-      .find({ postedBy: user.id }) // Use the string ID directly
+    const listings = await db.collection("foodlistings")
+      .find({ postedBy: user.id })
       .sort({ createdAt: -1 })
       .toArray();
 
-    const formattedListings = listings.map((listing) => ({
-      ...listing,
-      _id: listing._id.toString(),
-      expiration: listing.expiration.toISOString(),
-      createdAt: listing.createdAt.toISOString(),
-      updatedAt: listing.updatedAt.toISOString(),
-    }));
-
-    return NextResponse.json(formattedListings);
+    return NextResponse.json(listings);
   } catch (error) {
     console.error("Error fetching user listings:", error);
-    return NextResponse.json(
-      { error: "An unexpected error occurred" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "An unexpected error occurred" }, { status: 500 });
   }
 }

@@ -29,6 +29,7 @@ import {
   SettingsIcon,
   LogOutIcon,
 } from "lucide-react";
+import Sidebar from "@/components/Sidebar";
 
 const CreateListingForm = dynamic(
   () => import("@/components/CreateListingForm"),
@@ -50,7 +51,6 @@ const FoodListings: React.FC = () => {
   const [newMessage, setNewMessage] = useState("");
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const router = useRouter();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -306,68 +306,7 @@ const FoodListings: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-gray-900 text-gray-100">
-      {/* Sidebar */}
-      <div
-        className={`${
-          sidebarOpen ? "w-64" : "w-16"
-        } bg-gray-800 transition-all duration-300 ease-in-out`}
-      >
-        <div className="p-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            <MenuIcon className="h-6 w-6" />
-          </Button>
-        </div>
-        <nav className="mt-8">
-          <ul className="space-y-2">
-            <li>
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => router.push("/")}
-              >
-                <HomeIcon className="h-5 w-5 mr-2" />
-                {sidebarOpen && "Home"}
-              </Button>
-            </li>
-            <li>
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => router.push("/messages")}
-              >
-                <MessageSquareIcon className="h-5 w-5 mr-2" />
-                {sidebarOpen && "Messages"}
-              </Button>
-            </li>
-            <li>
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => router.push("/account")}
-              >
-                <SettingsIcon className="h-5 w-5 mr-2" />
-                {sidebarOpen && "Account"}
-              </Button>
-            </li>
-            <li>
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={handleLogout}
-              >
-                <LogOutIcon className="h-5 w-5 mr-2" />
-                {sidebarOpen && "Logout"}
-              </Button>
-            </li>
-          </ul>
-        </nav>
-      </div>
-
-      {/* Main content */}
+      <Sidebar onLogout={handleLogout} />
       <div className="flex-1 overflow-auto">
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-3xl font-bold mb-8 text-green-400">

@@ -19,6 +19,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { AlertPopup } from "@/components/ui/AlertPopup";
+import Sidebar from "@/components/Sidebar";
 
 const UserSettings: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -145,52 +146,7 @@ const UserSettings: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-gray-900 text-gray-100">
-      {/* Sidebar */}
-      <div
-        className={`${
-          sidebarOpen ? "w-64" : "w-16"
-        } bg-gray-800 transition-all duration-300 ease-in-out`}
-      >
-        <div className="p-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            <MenuIcon className="h-6 w-6" />
-          </Button>
-        </div>
-        <nav className="mt-8">
-          <ul className="space-y-2">
-            <li>
-              <Button variant="ghost" className="w-full justify-start" onClick={() => router.push("/")}>
-                <HomeIcon className="h-5 w-5 mr-2" />
-                {sidebarOpen && "Home"}
-              </Button>
-            </li>
-            <li>
-              <Button variant="ghost" className="w-full justify-start" onClick={() => router.push("/messages")}>
-                <MessageSquareIcon className="h-5 w-5 mr-2" />
-                {sidebarOpen && "Messages"}
-              </Button>
-            </li>
-            <li>
-              <Button variant="ghost" className="w-full justify-start" onClick={() => router.push("/settings")}>
-                <SettingsIcon className="h-5 w-5 mr-2" />
-                {sidebarOpen && "Settings"}
-              </Button>
-            </li>
-            <li>
-              <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
-                <LogOutIcon className="h-5 w-5 mr-2" />
-                {sidebarOpen && "Logout"}
-              </Button>
-            </li>
-          </ul>
-        </nav>
-      </div>
-
-      {/* Main content */}
+      <Sidebar onLogout={handleLogout} />
       <div className="flex-1 overflow-auto p-8">
         <h1 className="text-3xl font-bold mb-8 text-green-400">User Settings</h1>
         <ScrollArea className="h-[calc(100vh-10rem)]">

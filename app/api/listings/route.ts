@@ -121,10 +121,10 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   //console.log("POST request received for listing creation");
 
-  const authHeader = req.headers.get("Authorization");
+  const authHeader = request.headers.get("Authorization");
   if (!authHeader) {
     console.log("Unauthorized: No auth header");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -140,7 +140,7 @@ export async function POST(req: Request) {
 
   try {
     const { db } = await connectToDatabase();
-    const formData = await req.formData();
+    const formData = await request.formData();
 
     let imagePaths: string[] = [];
 
@@ -192,6 +192,105 @@ export async function POST(req: Request) {
         error: "Internal Server Error",
         details: error instanceof Error ? error.message : String(error),
       },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: Request) {
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const token = authHeader.split(" ")[1];
+  const user = await verifyToken(token);
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { db } = await connectToDatabase();
+    const formData = await request.formData();
+    const updateData: any = {};
+    const listingId = formData.get('id') as string;
+
+    if (!listingId) {
+      return NextResponse.json({ error: "Listing ID is required" }, { status: 400 });
+    }
+
+    // Process form data
+    formData.forEach((value, key) => {
+      if (key.startsWith('image')) {
+        // Handle image uploads
+        // You may need to implement image upload logic here
+      } else if (key !== 'id') {
+        updateData[key] = value;
+      }
+    });
+
+    const result = await db.collection("foodlistings").updateOne(
+      { _id: new ObjectId(listingId), postedBy: user.id },
+      { $set: updateData }
+    );
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json(
+        { error: "Listing not found or not authorized to update" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ message: "Listing updated successfully" });
+  } catch (error) {
+    console.error("Error updating listing:", error);
+    return NextResponse.json(
+      { error: "An unexpected error occurred" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const token = authHeader.split(" ")[1];
+  const user = await verifyToken(token);
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { db } = await connectToDatabase();
+    const { searchParams } = new URL(request.url);
+    const listingId = searchParams.get('id');
+
+    if (!listingId) {
+      return NextResponse.json({ error: "Listing ID is required" }, { status: 400 });
+    }
+
+    const result = await db.collection("foodlistings").deleteOne({
+      _id: new ObjectId(listingId),
+      postedBy: user.id,
+    });
+
+    if (result.deletedCount === 0) {
+      return NextResponse.json(
+        { error: "Listing not found or not authorized to delete" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ message: "Listing deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting listing:", error);
+    return NextResponse.json(
+      { error: "An unexpected error occurred" },
       { status: 500 }
     );
   }
