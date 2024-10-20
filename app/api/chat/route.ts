@@ -53,7 +53,7 @@ export async function GET(request: Request) {
       const messages = await db
         .collection("messages")
         .find({ conversationId: conversation._id })
-        .sort({ timestamp: 1 })
+        .sort({ timestamp: 1 }) // 1 for ascending order (oldest first)
         .toArray();
 
       return NextResponse.json({ conversation, messages });
@@ -193,17 +193,15 @@ export async function POST(request: Request) {
 
     const messageResult = await db.collection("messages").insertOne(newMessage);
 
-    await db
-      .collection("conversations")
-      .updateOne(
-        { _id: conversation._id },
-        {
-          $set: {
-            lastMessage: { content, timestamp: new Date() },
-            updatedAt: new Date(),
-          },
-        }
-      );
+    await db.collection("conversations").updateOne(
+      { _id: conversation._id },
+      {
+        $set: {
+          lastMessage: { content, timestamp: new Date() },
+          updatedAt: new Date(),
+        },
+      }
+    );
 
     return NextResponse.json(
       {

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Send, Menu } from "lucide-react";
+import { Send, Menu, ChevronDown } from "lucide-react";
 
 export default function Messages() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -21,7 +21,12 @@ export default function Messages() {
   const [newMessage, setNewMessage] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [previousMessageCount, setPreviousMessageCount] = useState(0);
+  const [showJumpToBottom, setShowJumpToBottom] = useState(false);
+  const [hasUserScrolled, setHasUserScrolled] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -59,10 +64,6 @@ export default function Messages() {
     }
   }, [selectedConversation]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
   const fetchConversations = async () => {
     try {
       const response = await fetch("/api/chat", {
@@ -81,36 +82,66 @@ export default function Messages() {
     }
   };
 
-  const fetchMessages = useCallback(async (conversationId: string) => {
-    try {
-      const response = await fetch(
-        `/api/chat?conversationId=${conversationId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        if (data.conversation) {
-          setSelectedConversation(data.conversation._id);
-          setMessages(data.messages);
-        } else {
-          setMessages([]);
-        }
-      } else if (response.status === 404) {
-        console.log("No messages found for this conversation");
-        setMessages([]);
-      } else {
-        console.error("Failed to fetch messages:", response.statusText);
-      }
-    } catch (error) {
-      console.error("Error fetching messages:", error);
+  const scrollToBottom = useCallback(() => {
+    if (!hasUserScrolled) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
     }
-  }, []);
+  }, [hasUserScrolled]);
 
-  const sendMessage = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (messages.length > 0 && !hasUserScrolled) {
+      scrollToBottom();
+    }
+  }, [messages, hasUserScrolled, scrollToBottom]);
+
+  const fetchMessages = useCallback(
+    async (conversationId: string) => {
+      try {
+        const response = await fetch(
+          `/api/chat?conversationId=${conversationId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          if (data.conversation) {
+            setSelectedConversation(data.conversation._id);
+            const sortedMessages = data.messages.sort(
+              (a: Message, b: Message) =>
+                new Date(a.timestamp).getTime() -
+                new Date(b.timestamp).getTime()
+            );
+            setMessages(sortedMessages);
+            if (isInitialLoad) {
+              setTimeout(scrollToBottom, 0);
+            }
+          } else {
+            setMessages([]);
+          }
+        } else if (response.status === 404) {
+          console.log("No messages found for this conversation");
+          setMessages([]);
+        } else {
+          console.error("Failed to fetch messages:", response.statusText);
+        }
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+      }
+    },
+    [isInitialLoad, scrollToBottom]
+  );
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(e);
+    }
+  };
+
+  const sendMessage = async (e: React.FormEvent | React.KeyboardEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !selectedConversation || !currentUser) return;
 
@@ -133,6 +164,7 @@ export default function Messages() {
         setMessages((prevMessages) => [...prevMessages, data.message]);
         setNewMessage("");
         fetchConversations();
+        // Remove any scrolling behavior here
       } else {
         console.error("Failed to send message:", data.error);
         if (response.status === 404) {
@@ -152,9 +184,50 @@ export default function Messages() {
 
   const handleConversationSelect = (conversationId: string) => {
     setSelectedConversation(conversationId);
+    setIsInitialLoad(true);
     fetchMessages(conversationId);
     router.push(`/messages?conversationId=${conversationId}`);
   };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  const groupMessagesByDate = (messages: Message[]) => {
+    const grouped: { [key: string]: Message[] } = {};
+    messages.forEach((message) => {
+      const date = formatDate(message.timestamp);
+      if (!grouped[date]) {
+        grouped[date] = [];
+      }
+      grouped[date].push(message);
+    });
+    return grouped;
+  };
+
+  const handleScroll = useCallback(() => {
+    if (scrollAreaRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollAreaRef.current;
+      const atBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setShowJumpToBottom(!atBottom);
+      setHasUserScrolled(true);
+    }
+  }, []);
 
   if (!currentUser) {
     return (
@@ -165,13 +238,10 @@ export default function Messages() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-900 text-white">
-      <div className="w-1/3 border-r border-gray-700">
-        <div className="p-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold">Conversations</h2>
-          <Button variant="ghost" size="icon">
-            <Menu className="h-5 w-5" />
-          </Button>
+    <div className="flex h-screen bg-gray-900 text-gray-100">
+      <div className="w-1/3 border-r border-gray-800">
+        <div className="p-4">
+          <h2 className="text-xl font-bold text-green-400">Conversations</h2>
         </div>
         <ScrollArea className="h-[calc(100vh-5rem)]">
           {conversations.map((conv) => (
@@ -184,13 +254,13 @@ export default function Messages() {
               >
                 <div className="flex items-center space-x-4">
                   <Avatar>
-                    <AvatarImage alt={conv.otherUser?.name} />
-                    <AvatarFallback>
-                      {conv.otherUser?.name?.charAt(0)}
+                    <AvatarImage src="" alt={conv.otherUser?.name} />
+                    <AvatarFallback className="bg-gray-700">
+                      {conv.otherUser?.name?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">
+                    <p className="font-medium truncate text-gray-200">
                       {conv.otherUser?.name || "Unknown User"}
                     </p>
                     <p className="text-sm text-gray-400 truncate">
@@ -199,12 +269,12 @@ export default function Messages() {
                   </div>
                   <div className="text-xs text-gray-500">
                     {conv.lastMessage?.timestamp
-                      ? new Date(conv.lastMessage.timestamp).toLocaleString()
+                      ? formatDate(conv.lastMessage.timestamp)
                       : "No timestamp"}
                   </div>
                 </div>
               </div>
-              <Separator />
+              <Separator className="bg-gray-800" />
             </div>
           ))}
         </ScrollArea>
@@ -212,45 +282,73 @@ export default function Messages() {
       <div className="w-2/3 flex flex-col">
         {selectedConversation ? (
           <>
-            <ScrollArea className="flex-1 p-4">
-              {messages.map((message) => (
-                <div
-                  key={message._id}
-                  className={`mb-4 flex ${
-                    message.sender === currentUser?.id
-                      ? "justify-end"
-                      : "justify-start"
-                  }`}
-                >
-                  <div
-                    className={`max-w-[70%] p-3 rounded-lg ${
-                      message.sender === currentUser?.id
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-700 text-white"
-                    }`}
-                  >
-                    <p>{message.content}</p>
-                    <p className="text-xs text-gray-300 mt-1">
-                      {new Date(message.timestamp).toLocaleString()}
-                    </p>
+            <ScrollArea
+              className="flex-1 p-4"
+              ref={scrollAreaRef}
+              onScroll={handleScroll}
+            >
+              {Object.entries(groupMessagesByDate(messages)).map(
+                ([date, dateMessages]) => (
+                  <div key={date}>
+                    <div className="text-center my-4">
+                      <span className="bg-gray-800 text-gray-300 px-2 py-1 rounded-full text-sm">
+                        {formatDate(date)}
+                      </span>
+                    </div>
+                    {dateMessages.map((message) => (
+                      <div
+                        key={message._id}
+                        className={`mb-4 flex ${
+                          message.sender === currentUser?.id
+                            ? "justify-end"
+                            : "justify-start"
+                        }`}
+                      >
+                        <div
+                          className={`max-w-[70%] min-w-[200px] p-3 rounded-lg ${
+                            message.sender === currentUser?.id
+                              ? "bg-green-800 text-white" // Darker green for sender (current user)
+                              : "bg-gray-700 text-gray-100" // Grey-ish for receiver's messages
+                          }`}
+                        >
+                          <p className="break-words">{message.content}</p>
+                          <p className="text-xs text-gray-300 mt-1 text-right">
+                            {formatTime(message.timestamp)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              ))}
+                )
+              )}
               <div ref={messagesEndRef} />
             </ScrollArea>
+            {showJumpToBottom && (
+              <Button
+                className="absolute bottom-20 right-4 rounded-full p-2 bg-primary text-white hover:bg-primary/80"
+                onClick={() => {
+                  scrollToBottom();
+                  setHasUserScrolled(false);
+                }}
+              >
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            )}
             <form
               onSubmit={sendMessage}
-              className="p-4 border-t border-gray-700"
+              className="p-4 border-t border-gray-800"
             >
               <div className="flex space-x-2">
-                <Input
-                  type="text"
+                <textarea
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  className="flex-1 bg-gray-800 border-gray-700 text-white"
+                  onKeyDown={handleKeyDown}
+                  className="flex-1 bg-gray-700 text-gray-100 border-gray-600 focus:border-green-400 rounded-md p-2 resize-none"
                   placeholder="Type a message..."
+                  rows={5}
+                  style={{ minHeight: "5rem", maxHeight: "15rem" }}
                 />
-                <Button type="submit" size="icon">
+                <Button type="submit" size="icon" variant="ghost" className="text-green-400 hover:text-green-300">
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
