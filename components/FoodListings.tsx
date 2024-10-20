@@ -23,7 +23,12 @@ import {
   CalendarIcon,
   MapPinIcon,
   UserIcon,
-} from "@heroicons/react/24/outline";
+  MenuIcon,
+  HomeIcon,
+  MessageSquareIcon,
+  SettingsIcon,
+  LogOutIcon,
+} from "lucide-react";
 
 const CreateListingForm = dynamic(
   () => import("@/components/CreateListingForm"),
@@ -45,6 +50,7 @@ const FoodListings: React.FC = () => {
   const [newMessage, setNewMessage] = useState("");
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -190,7 +196,9 @@ const FoodListings: React.FC = () => {
       const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-      if (diffHours < 24) {
+      if (diffHours <= 1) {
+        return { value: "1", unit: "hour" };
+      } else if (diffHours < 24) {
         return { value: diffHours, unit: "hours" };
       } else {
         return { value: diffDays, unit: "days" };
@@ -202,7 +210,7 @@ const FoodListings: React.FC = () => {
     const getBadgeStyle = () => {
       if (timeLeft.value === "Expired") {
         return "bg-red-100 bg-opacity-60 text-red-800";
-      } else if (timeLeft.unit === "hours") {
+      } else if (timeLeft.unit === "hour" || timeLeft.unit === "hours") {
         return "bg-red-100 bg-opacity-60 text-red-800";
       } else {
         return "bg-gray-200 text-gray-800";
@@ -210,10 +218,10 @@ const FoodListings: React.FC = () => {
     };
 
     return (
-      <Card className="overflow-hidden transition-shadow duration-300 hover:shadow-lg rounded-md">
-        <CardHeader className="p-4">
+      <Card className="bg-gray-800 text-gray-100 overflow-hidden transition-shadow duration-300 hover:shadow-lg rounded-md border-gray-700">
+        <CardHeader className="p-4 border-b border-gray-700">
           <div className="flex justify-between items-start">
-            <CardTitle className="text-xl font-bold">
+            <CardTitle className="text-xl font-bold text-green-400">
               {listing.foodType}
             </CardTitle>
             <Badge variant="custom" className={`${getBadgeStyle()} rounded-md`}>
@@ -223,25 +231,25 @@ const FoodListings: React.FC = () => {
             </Badge>
           </div>
         </CardHeader>
-        <CardContent className="p-4 pt-0">
-          <p className="text-gray-600 mb-4">{listing.description}</p>
+        <CardContent className="p-4">
+          <p className="text-gray-300 mb-4">{listing.description}</p>
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="flex items-center">
               <CalendarIcon className="h-5 w-5 text-gray-400 mr-2" />
-              <span className="text-sm">
+              <span className="text-sm text-gray-300">
                 Expires: {formatDate(listing.expiration)}
               </span>
             </div>
             <div className="flex items-center">
               <MapPinIcon className="h-5 w-5 text-gray-400 mr-2" />
-              <span className="text-sm">{listing.location}</span>
+              <span className="text-sm text-gray-300">{listing.location}</span>
             </div>
           </div>
           <div className="flex justify-between items-center mb-4">
-            <span className="text-lg font-semibold">
+            <span className="text-lg font-semibold text-gray-200">
               {listing.quantity} {listing.quantityUnit}
             </span>
-            <div className="flex items-center text-sm text-gray-500">
+            <div className="flex items-center text-sm text-gray-400">
               <UserIcon className="h-4 w-4 mr-1" />
               {listing.postedBy || "Unknown"}
             </div>
@@ -270,7 +278,7 @@ const FoodListings: React.FC = () => {
           )}
           <Button
             onClick={() => handleMessageSeller(listing)}
-            className="w-full"
+            className="w-full bg-green-700 text-white hover:bg-green-800"
             disabled={isOwnListing}
           >
             {isOwnListing ? "Your Listing" : "Message Seller"}
@@ -291,92 +299,187 @@ const FoodListings: React.FC = () => {
     //console.log("Current listings:", listings);
   }, [listings]);
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    router.push("/login");
+  };
+
   return (
-    <div className="container mx-auto px-4 relative">
-      <h1 className="text-2xl font-bold mb-4">Food Listings</h1>
-
-      <form onSubmit={handleSearch} className="mb-4">
-        <Input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search food listings..."
-          className="mb-2"
-        />
-        <Button type="submit" className="mr-2">
-          Search
-        </Button>
-        <Button
-          type="button"
-          onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
-        >
-          {showAdvancedSearch ? "Hide Advanced Search" : "Advanced Search"}
-        </Button>
-      </form>
-
-      {showAdvancedSearch && (
-        <div className="mb-4">
-          <AdvancedSearchForm onSearch={handleAdvancedSearch} />
+    <div className="flex h-screen bg-gray-900 text-gray-100">
+      {/* Sidebar */}
+      <div
+        className={`${
+          sidebarOpen ? "w-64" : "w-16"
+        } bg-gray-800 transition-all duration-300 ease-in-out`}
+      >
+        <div className="p-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            <MenuIcon className="h-6 w-6" />
+          </Button>
         </div>
-      )}
+        <nav className="mt-8">
+          <ul className="space-y-2">
+            <li>
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={() => router.push("/")}
+              >
+                <HomeIcon className="h-5 w-5 mr-2" />
+                {sidebarOpen && "Home"}
+              </Button>
+            </li>
+            <li>
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={() => router.push("/messages")}
+              >
+                <MessageSquareIcon className="h-5 w-5 mr-2" />
+                {sidebarOpen && "Messages"}
+              </Button>
+            </li>
+            <li>
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={() => router.push("/account")}
+              >
+                <SettingsIcon className="h-5 w-5 mr-2" />
+                {sidebarOpen && "Account"}
+              </Button>
+            </li>
+            <li>
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={handleLogout}
+              >
+                <LogOutIcon className="h-5 w-5 mr-2" />
+                {sidebarOpen && "Logout"}
+              </Button>
+            </li>
+          </ul>
+        </nav>
+      </div>
 
-      {isLoading && <p>Loading...</p>}
-      {error && <p className="text-red-500">{error}</p>}
-      {!isLoading && !error && (
-        <>
-          {listings.length === 0 ? (
-            <p className="text-center text-gray-500 mt-8">
-              No listings available
-            </p>
-          ) : (
-            <ul>
-              {listings.map((listing) => (
-                <li key={listing._id} className="mb-4 p-4 border rounded">
-                  <FoodListing listing={listing} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
-      )}
+      {/* Main content */}
+      <div className="flex-1 overflow-auto">
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="text-3xl font-bold mb-8 text-green-400">
+            Food Listings
+          </h1>
 
-      {user && (
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="mb-4">Create Listing</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Food Listing</DialogTitle>
-            </DialogHeader>
-            <CreateListingForm onListingCreated={fetchListings} />
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {selectedListing && (
-        <Dialog
-          open={!!selectedListing}
-          onOpenChange={() => setSelectedListing(null)}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Message Seller</DialogTitle>
-            </DialogHeader>
-            <div>
-              <p>Listing: {selectedListing.foodType}</p>
-              <Input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type your message..."
-                className="mb-2"
-              />
-              <Button onClick={sendMessage}>Send Message</Button>
+          <form onSubmit={handleSearch} className="mb-8">
+            <Input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search food listings..."
+              className="mb-4 bg-gray-800 border-gray-700 text-gray-100 focus:border-green-400"
+            />
+            <div className="flex space-x-4">
+              <Button
+                type="submit"
+                className="bg-green-700 text-white hover:bg-green-800"
+              >
+                Search
+              </Button>
+              <Button
+                type="button"
+                onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
+                className="bg-gray-700 text-white hover:bg-gray-600"
+              >
+                {showAdvancedSearch
+                  ? "Hide Advanced Search"
+                  : "Advanced Search"}
+              </Button>
             </div>
-          </DialogContent>
-        </Dialog>
-      )}
+          </form>
+
+          {showAdvancedSearch && (
+            <div className="mb-8 bg-gray-800 p-6 rounded-lg">
+              <AdvancedSearchForm onSearch={handleAdvancedSearch} />
+            </div>
+          )}
+
+          {isLoading && <p className="text-gray-400">Loading...</p>}
+          {error && <p className="text-red-400">{error}</p>}
+          {!isLoading && !error && (
+            <>
+              {listings.length === 0 ? (
+                <p className="text-center text-gray-400 mt-8">
+                  No listings available
+                </p>
+              ) : (
+                <ul className="space-y-8">
+                  {listings.map((listing) => (
+                    <li key={listing._id}>
+                      <FoodListing listing={listing} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          )}
+
+          {user && (
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="mt-8 bg-green-700 text-white hover:bg-green-800">
+                  Create Listing
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-gray-800 text-gray-100">
+                <DialogHeader>
+                  <DialogTitle className="text-green-400">
+                    Create New Food Listing
+                  </DialogTitle>
+                </DialogHeader>
+                <CreateListingForm
+                  onListingCreated={fetchListings}
+                  onClose={() => {}}
+                />
+              </DialogContent>
+            </Dialog>
+          )}
+
+          {selectedListing && (
+            <Dialog
+              open={!!selectedListing}
+              onOpenChange={() => setSelectedListing(null)}
+            >
+              <DialogContent className="bg-gray-800 text-gray-100">
+                <DialogHeader>
+                  <DialogTitle className="text-green-400">
+                    Message Seller
+                  </DialogTitle>
+                </DialogHeader>
+                <div>
+                  <p className="mb-4">Listing: {selectedListing.foodType}</p>
+                  <Input
+                    type="text"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Type your message..."
+                    className="mb-4 bg-gray-700 text-gray-100 border-gray-600 focus:border-green-400"
+                  />
+                  <Button
+                    onClick={sendMessage}
+                    className="bg-green-700 text-white hover:bg-green-800"
+                  >
+                    Send Message
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

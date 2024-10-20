@@ -348,7 +348,12 @@ export default function Messages() {
                   rows={5}
                   style={{ minHeight: "5rem", maxHeight: "15rem" }}
                 />
-                <Button type="submit" size="icon" variant="ghost" className="text-green-400 hover:text-green-300">
+                <Button
+                  type="submit"
+                  size="icon"
+                  variant="ghost"
+                  className="text-green-400 hover:text-green-300"
+                >
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
