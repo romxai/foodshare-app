@@ -38,22 +38,15 @@ const LoginForm: React.FC = () => {
       console.log("Response status:", response.status);
       console.log("Response headers:", response.headers);
 
-      const contentType = response.headers.get("content-type");
-      if (contentType && contentType.includes("application/json")) {
-        const data = await response.json();
-        console.log("Response data:", data);
+      const data = await response.json();
+      console.log("Response data:", data);
 
-        if (response.ok) {
-          localStorage.setItem("token", data.token);
-          router.push("/account");
-        } else {
-          throw new Error(data.message || "Login failed");
-        }
-      } else {
-        const text = await response.text();
-        console.error("Unexpected response:", text);
-        throw new Error("Server error: Unexpected response format");
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed");
       }
+
+      localStorage.setItem("token", data.token);
+      router.push("/account");
     } catch (err) {
       console.error("Login error:", err);
       setError(err instanceof Error ? err.message : String(err));

@@ -62,7 +62,7 @@ const SignupForm = () => {
   };
 
   return (
-    <Card className="mx-auto max-w-sm">
+    <Card className="mx-auto w-full max-w-sm">
       <CardHeader>
         <CardTitle className="text-2xl">Sign Up</CardTitle>
         <CardDescription>

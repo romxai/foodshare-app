@@ -16,6 +16,14 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import FullScreenImage from "./FullScreenImage";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  CalendarIcon,
+  MapPinIcon,
+  UserIcon,
+} from "@heroicons/react/24/outline";
 
 const CreateListingForm = dynamic(
   () => import("@/components/CreateListingForm"),
@@ -35,6 +43,7 @@ const FoodListings: React.FC = () => {
     null
   );
   const [newMessage, setNewMessage] = useState("");
+  const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -171,43 +180,119 @@ const FoodListings: React.FC = () => {
     const isOwnListing = listing.postedById === user?.id;
     console.log("Is own listing:", isOwnListing);
 
+    const getTimeLeft = (expirationDate: string) => {
+      const now = new Date();
+      const expiration = new Date(expirationDate);
+      const diffTime = expiration.getTime() - now.getTime();
+      const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffHours < 24) {
+        return { value: diffHours, unit: 'hours' };
+      } else {
+        return { value: diffDays, unit: 'days' };
+      }
+    };
+
+    const isNew = (createdAt: string) => {
+      const now = new Date();
+      const created = new Date(createdAt);
+      const diffTime = now.getTime() - created.getTime();
+      const diffMinutes = Math.ceil(diffTime / (1000 * 60));
+      return diffMinutes <= 30;
+    };
+
+    const timeLeft = getTimeLeft(listing.expiration);
+    const listingIsNew = isNew(listing.createdAt);
+
+    const getBadgeStyle = () => {
+      if (listingIsNew) {
+        return "bg-green-100 bg-opacity-60 text-green-800";
+      } else if (timeLeft.unit === 'hours') {
+        return "bg-red-100 bg-opacity-60 text-red-800";
+      } else {
+        return "bg-gray-200 text-gray-800";
+      }
+    };
+
     return (
-      <div>
-        <h3 className="font-bold">{listing.foodType}</h3>
-        <p>{listing.description}</p>
-        <p>Quantity: {listing.quantity} {listing.quantityUnit}</p>
-        <p>Expiration: {formatDate(listing.expiration)}</p>
-        <p>Location: {listing.location}</p>
-        <p>Posted: {new Date(listing.createdAt).toLocaleString()}</p>
-        <p>Posted By: {listing.postedBy || "Unknown"}</p>
-        {listing.imagePaths && listing.imagePaths.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-2">
-            {listing.imagePaths.map((path, index) => (
-              <Image
-                key={index}
-                src={path.startsWith("/") ? path : `/${path}`}
-                alt={`${listing.foodType} - Image ${index + 1}`}
-                width={100}
-                height={100}
-                style={{ objectFit: "cover" }}
-                loading="lazy"
-                onError={() => {
-                  console.error(
-                    `Error loading image ${index + 1} for ${listing.foodType}`
-                  );
-                }}
-              />
-            ))}
+      <Card className="overflow-hidden transition-shadow duration-300 hover:shadow-lg rounded-md">
+        <CardHeader className="p-4">
+          <div className="flex justify-between items-start">
+            <CardTitle className="text-xl font-bold">
+              {listing.foodType}
+            </CardTitle>
+            <Badge 
+              variant="custom"
+              className={`${getBadgeStyle()} rounded-md`}
+            >
+              {listingIsNew 
+                ? "New" 
+                : `${timeLeft.value} ${timeLeft.unit} left`}
+            </Badge>
           </div>
+        </CardHeader>
+        <CardContent className="p-4 pt-0">
+          <p className="text-gray-600 mb-4">{listing.description}</p>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="flex items-center">
+              <CalendarIcon className="h-5 w-5 text-gray-400 mr-2" />
+              <span className="text-sm">
+                Expires: {formatDate(listing.expiration)}
+              </span>
+            </div>
+            <div className="flex items-center">
+              <MapPinIcon className="h-5 w-5 text-gray-400 mr-2" />
+              <span className="text-sm">{listing.location}</span>
+            </div>
+          </div>
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-lg font-semibold">
+              {listing.quantity} {listing.quantityUnit}
+            </span>
+            <div className="flex items-center text-sm text-gray-500">
+              <UserIcon className="h-4 w-4 mr-1" />
+              {listing.postedBy || "Unknown"}
+            </div>
+          </div>
+          {listing.imagePaths && listing.imagePaths.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {listing.imagePaths.map((path, index) => (
+                <Image
+                  key={index}
+                  src={path.startsWith("/") ? path : `/${path}`}
+                  alt={`${listing.foodType} - Image ${index + 1}`}
+                  width={80}
+                  height={80}
+                  className="rounded-md object-cover cursor-pointer transition-transform duration-300 hover:scale-105"
+                  onClick={() =>
+                    setFullScreenImage(path.startsWith("/") ? path : `/${path}`)
+                  }
+                  onError={() => {
+                    console.error(
+                      `Error loading image ${index + 1} for ${listing.foodType}`
+                    );
+                  }}
+                />
+              ))}
+            </div>
+          )}
+          <Button
+            onClick={() => handleMessageSeller(listing)}
+            className="w-full"
+            disabled={isOwnListing}
+          >
+            {isOwnListing ? "Your Listing" : "Message Seller"}
+          </Button>
+        </CardContent>
+        {fullScreenImage && (
+          <FullScreenImage
+            src={fullScreenImage}
+            alt={listing.foodType}
+            onClose={() => setFullScreenImage(null)}
+          />
         )}
-        <Button
-          onClick={() => handleMessageSeller(listing)}
-          className="mt-2"
-          disabled={isOwnListing}
-        >
-          {isOwnListing ? "Your Listing" : "Message Seller"}
-        </Button>
-      </div>
+      </Card>
     );
   };
 

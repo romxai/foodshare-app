@@ -93,10 +93,10 @@ export async function GET(request: Request) {
               from: "users",
               let: { postedById: { $toObjectId: "$postedBy" } },
               pipeline: [
-                { $match: { $expr: { $eq: ["$_id", "$$postedById"] } } }
+                { $match: { $expr: { $eq: ["$_id", "$$postedById"] } } },
               ],
-              as: "userDetails"
-            }
+              as: "userDetails",
+            },
           },
           {
             $project: {
@@ -221,3 +221,4 @@ const ensureDirectoryExists = async (directory: string) => {
     console.error("Error creating directory:", error);
   }
 };
+

@@ -19,6 +19,7 @@ export interface FoodListing {
   createdAt: string;
   updatedAt: string;
   imagePaths?: string[];
+  isNew?: boolean;
 }
 
 // ... other types
