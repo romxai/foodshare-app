@@ -7,13 +7,15 @@
     "dev": "nodemon index.js"
   },
   "dependencies": {
+    "@types/multer": "^1.4.12",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^10.0.0",
     "express": "^4.21.1",
     "jsonwebtoken": "^8.5.1",
-    "mongoose": "^6.13.3"
+    "mongoose": "^6.13.3",
+    "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
     "nodemon": "^2.0.15"

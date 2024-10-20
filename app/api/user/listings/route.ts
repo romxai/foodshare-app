@@ -21,7 +21,7 @@ export async function GET(request: Request) {
 
     const listings = await db
       .collection("foodlistings")
-      .find({ postedBy: new ObjectId(user.id) })
+      .find({ postedBy: user.id }) // Use the string ID directly
       .sort({ createdAt: -1 })
       .toArray();
 
