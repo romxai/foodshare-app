@@ -221,14 +221,14 @@ export async function PUT(request: Request) {
     }
 
     // Process form data
-    formData.forEach((value, key) => {
+    for (const [key, value] of formData.entries()) {
       if (key.startsWith('image')) {
         // Handle image uploads
         // You may need to implement image upload logic here
       } else if (key !== 'id') {
         updateData[key] = value;
       }
-    });
+    }
 
     const result = await db.collection("foodlistings").updateOne(
       { _id: new ObjectId(listingId), postedBy: user.id },

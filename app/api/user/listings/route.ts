@@ -17,7 +17,8 @@ export async function GET(request: Request) {
 
   try {
     const { db } = await connectToDatabase();
-    const listings = await db.collection("foodlistings")
+    const listings = await db
+      .collection("foodlistings")
       .find({ postedBy: user.id })
       .sort({ createdAt: -1 })
       .toArray();
@@ -25,6 +26,9 @@ export async function GET(request: Request) {
     return NextResponse.json(listings);
   } catch (error) {
     console.error("Error fetching user listings:", error);
-    return NextResponse.json({ error: "An unexpected error occurred" }, { status: 500 });
+    return NextResponse.json(
+      { error: "An unexpected error occurred" },
+      { status: 500 }
+    );
   }
 }

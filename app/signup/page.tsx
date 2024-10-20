@@ -1,12 +1,10 @@
 import React from "react";
-import SignupForm from "../../components/AuthForms/SignupForm";
+import SignupForm from "@/components/AuthForms/SignupForm";
 
-const SignupPage: React.FC = () => {
+export default function SignupPage() {
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center">
       <SignupForm />
     </div>
   );
-};
-
-export default SignupPage;
+}

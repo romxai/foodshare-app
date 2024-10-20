@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,8 +19,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import EditListingForm from './EditListingForm';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import EditListingForm from "./EditListingForm";
 
 interface UserActivityProps {
   user: User;
@@ -29,11 +34,13 @@ interface UserActivityProps {
 const UserActivity: React.FC<UserActivityProps> = ({ user }) => {
   const [posts, setPosts] = useState<FoodListing[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
   const router = useRouter();
-  const [editingListing, setEditingListing] = useState<FoodListing | null>(null);
+  const [editingListing, setEditingListing] = useState<FoodListing | null>(
+    null
+  );
 
   useEffect(() => {
     fetchActivity();
@@ -41,17 +48,17 @@ const UserActivity: React.FC<UserActivityProps> = ({ user }) => {
 
   const fetchActivity = async () => {
     try {
-      const response = await fetch('/api/user/listings', {
+      const response = await fetch("/api/user/listings", {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
-      if (!response.ok) throw new Error('Failed to fetch activity');
+      if (!response.ok) throw new Error("Failed to fetch activity");
       const data = await response.json();
       setPosts(data);
     } catch (err) {
-      console.error('Error fetching activity:', err);
-      setError('Failed to load activity data');
+      console.error("Error fetching activity:", err);
+      setError("Failed to load activity data");
     } finally {
       setLoading(false);
     }
@@ -72,20 +79,20 @@ const UserActivity: React.FC<UserActivityProps> = ({ user }) => {
 
     try {
       const response = await fetch(`/api/listings?id=${deletingPostId}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete listing');
+        throw new Error("Failed to delete listing");
       }
 
-      setPosts(posts.filter(post => post._id !== deletingPostId));
+      setPosts(posts.filter((post) => post._id !== deletingPostId));
     } catch (err) {
-      console.error('Error deleting listing:', err);
-      setError('Failed to delete listing');
+      console.error("Error deleting listing:", err);
+      setError("Failed to delete listing");
     } finally {
       setDeleteConfirmOpen(false);
       setDeletingPostId(null);
@@ -122,7 +129,10 @@ const UserActivity: React.FC<UserActivityProps> = ({ user }) => {
     }
   };
 
-  const getBadgeStyle = (timeLeft: { value: string | number; unit: string }) => {
+  const getBadgeStyle = (timeLeft: {
+    value: string | number;
+    unit: string;
+  }) => {
     if (timeLeft.value === "Expired") {
       return "bg-red-100 bg-opacity-60 text-red-800";
     } else if (timeLeft.unit === "hour" || timeLeft.unit === "hours") {
@@ -148,7 +158,9 @@ const UserActivity: React.FC<UserActivityProps> = ({ user }) => {
     <div className="flex h-screen bg-gray-900 text-gray-100">
       <Sidebar onLogout={handleLogout} />
       <div className="flex-1 overflow-auto p-8">
-        <h1 className="text-3xl font-bold mb-8 text-green-400">Your Food Listings</h1>
+        <h1 className="text-3xl font-bold mb-8 text-green-400">
+          Your Food Listings
+        </h1>
         {posts.length === 0 ? (
           <p>You haven't posted any food listings yet.</p>
         ) : (
@@ -156,10 +168,10 @@ const UserActivity: React.FC<UserActivityProps> = ({ user }) => {
             const timeLeft = getTimeLeft(post.expiration);
             const isExpired = timeLeft.value === "Expired";
             return (
-              <Card 
-                key={post._id} 
+              <Card
+                key={post._id}
                 className={`mb-6 bg-gray-800 text-gray-100 overflow-hidden transition-shadow duration-300 hover:shadow-lg rounded-md group relative ${
-                  isExpired ? 'opacity-75' : ''
+                  isExpired ? "opacity-75" : ""
                 }`}
               >
                 {isExpired && (
@@ -167,10 +179,17 @@ const UserActivity: React.FC<UserActivityProps> = ({ user }) => {
                 )}
                 <CardHeader className="p-4 border-b border-gray-700">
                   <div className="flex justify-between items-start">
-                    <CardTitle className={`text-xl font-bold ${isExpired ? 'text-gray-400' : 'text-green-400'}`}>
+                    <CardTitle
+                      className={`text-xl font-bold ${
+                        isExpired ? "text-gray-400" : "text-green-400"
+                      }`}
+                    >
                       {post.foodType}
                     </CardTitle>
-                    <Badge variant="custom" className={`${getBadgeStyle(timeLeft)} rounded-md`}>
+                    <Badge
+                      variant="custom"
+                      className={`${getBadgeStyle(timeLeft)} rounded-md`}
+                    >
                       {timeLeft.value === "Expired"
                         ? "Expired"
                         : `${timeLeft.value} ${timeLeft.unit} left`}
@@ -188,7 +207,9 @@ const UserActivity: React.FC<UserActivityProps> = ({ user }) => {
                     </div>
                     <div className="flex items-center">
                       <MapPinIcon className="h-5 w-5 text-gray-400 mr-2" />
-                      <span className="text-sm text-gray-300">{post.location}</span>
+                      <span className="text-sm text-gray-300">
+                        {post.location}
+                      </span>
                     </div>
                   </div>
                   <div className="flex justify-between items-center mb-4">
@@ -241,17 +262,23 @@ const UserActivity: React.FC<UserActivityProps> = ({ user }) => {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your food listing.
+              This action cannot be undone. This will permanently delete your
+              food listing.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm}>Delete</AlertDialogAction>
+            <AlertDialogAction onClick={handleDeleteConfirm}>
+              Delete
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
       {editingListing && (
-        <Dialog open={!!editingListing} onOpenChange={() => setEditingListing(null)}>
+        <Dialog
+          open={!!editingListing}
+          onOpenChange={() => setEditingListing(null)}
+        >
           <DialogContent className="bg-gray-800 text-gray-100">
             <DialogHeader>
               <DialogTitle>Edit Food Listing</DialogTitle>
