@@ -183,32 +183,26 @@ const FoodListings: React.FC = () => {
     const getTimeLeft = (expirationDate: string) => {
       const now = new Date();
       const expiration = new Date(expirationDate);
+      if (expiration <= now) {
+        return { value: "Expired", unit: "" };
+      }
       const diffTime = expiration.getTime() - now.getTime();
       const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
       if (diffHours < 24) {
-        return { value: diffHours, unit: 'hours' };
+        return { value: diffHours, unit: "hours" };
       } else {
-        return { value: diffDays, unit: 'days' };
+        return { value: diffDays, unit: "days" };
       }
     };
 
-    const isNew = (createdAt: string) => {
-      const now = new Date();
-      const created = new Date(createdAt);
-      const diffTime = now.getTime() - created.getTime();
-      const diffMinutes = Math.ceil(diffTime / (1000 * 60));
-      return diffMinutes <= 30;
-    };
-
     const timeLeft = getTimeLeft(listing.expiration);
-    const listingIsNew = isNew(listing.createdAt);
 
     const getBadgeStyle = () => {
-      if (listingIsNew) {
-        return "bg-green-100 bg-opacity-60 text-green-800";
-      } else if (timeLeft.unit === 'hours') {
+      if (timeLeft.value === "Expired") {
+        return "bg-red-100 bg-opacity-60 text-red-800";
+      } else if (timeLeft.unit === "hours") {
         return "bg-red-100 bg-opacity-60 text-red-800";
       } else {
         return "bg-gray-200 text-gray-800";
@@ -222,12 +216,9 @@ const FoodListings: React.FC = () => {
             <CardTitle className="text-xl font-bold">
               {listing.foodType}
             </CardTitle>
-            <Badge 
-              variant="custom"
-              className={`${getBadgeStyle()} rounded-md`}
-            >
-              {listingIsNew 
-                ? "New" 
+            <Badge variant="custom" className={`${getBadgeStyle()} rounded-md`}>
+              {timeLeft.value === "Expired"
+                ? "Expired"
                 : `${timeLeft.value} ${timeLeft.unit} left`}
             </Badge>
           </div>
@@ -301,7 +292,7 @@ const FoodListings: React.FC = () => {
   }, [listings]);
 
   return (
-    <div className="container mx-auto px-4">
+    <div className="container mx-auto px-4 relative">
       <h1 className="text-2xl font-bold mb-4">Food Listings</h1>
 
       <form onSubmit={handleSearch} className="mb-4">
@@ -331,15 +322,22 @@ const FoodListings: React.FC = () => {
 
       {isLoading && <p>Loading...</p>}
       {error && <p className="text-red-500">{error}</p>}
-
       {!isLoading && !error && (
-        <ul>
-          {listings.map((listing) => (
-            <li key={listing._id} className="mb-4 p-4 border rounded">
-              <FoodListing listing={listing} />
-            </li>
-          ))}
-        </ul>
+        <>
+          {listings.length === 0 ? (
+            <p className="text-center text-gray-500 mt-8">
+              No listings available
+            </p>
+          ) : (
+            <ul>
+              {listings.map((listing) => (
+                <li key={listing._id} className="mb-4 p-4 border rounded">
+                  <FoodListing listing={listing} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
 
       {user && (

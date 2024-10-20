@@ -25,13 +25,15 @@ export async function GET(request: Request) {
     if (conversationId) {
       let conversation = await db.collection("conversations").findOne({
         _id: new ObjectId(conversationId),
-        participants: new ObjectId(user.id)
+        participants: new ObjectId(user.id),
       });
 
       if (!conversation) {
         // If conversation not found, check if it's a user ID
         conversation = await db.collection("conversations").findOne({
-          participants: { $all: [new ObjectId(user.id), new ObjectId(conversationId)] }
+          participants: {
+            $all: [new ObjectId(user.id), new ObjectId(conversationId)],
+          },
         });
 
         if (!conversation) {
@@ -41,7 +43,9 @@ export async function GET(request: Request) {
             createdAt: new Date(),
             updatedAt: new Date(),
           };
-          const result = await db.collection("conversations").insertOne(newConversation);
+          const result = await db
+            .collection("conversations")
+            .insertOne(newConversation);
           conversation = { ...newConversation, _id: result.insertedId };
         }
       }
@@ -130,7 +134,8 @@ export async function POST(request: Request) {
 
   try {
     const { db } = await connectToDatabase();
-    const { content, conversationId, recipientId, listingId } = await request.json();
+    const { content, conversationId, recipientId, listingId } =
+      await request.json();
 
     let conversation;
 
@@ -138,16 +143,21 @@ export async function POST(request: Request) {
       // Existing conversation
       conversation = await db.collection("conversations").findOne({
         _id: new ObjectId(conversationId),
-        participants: new ObjectId(user.id)
+        participants: new ObjectId(user.id),
       });
 
       if (!conversation) {
-        return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
+        return NextResponse.json(
+          { error: "Conversation not found" },
+          { status: 404 }
+        );
       }
     } else if (recipientId) {
       // Check for existing conversation between these users
       conversation = await db.collection("conversations").findOne({
-        participants: { $all: [new ObjectId(user.id), new ObjectId(recipientId)] }
+        participants: {
+          $all: [new ObjectId(user.id), new ObjectId(recipientId)],
+        },
       });
 
       if (!conversation) {
@@ -158,17 +168,24 @@ export async function POST(request: Request) {
           createdAt: new Date(),
           updatedAt: new Date(),
         };
-        const result = await db.collection("conversations").insertOne(newConversation);
+        const result = await db
+          .collection("conversations")
+          .insertOne(newConversation);
         conversation = { ...newConversation, _id: result.insertedId };
       }
     } else {
-      return NextResponse.json({ error: "Invalid request parameters" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid request parameters" },
+        { status: 400 }
+      );
     }
 
     const newMessage = {
       conversationId: conversation._id,
       sender: new ObjectId(user.id),
-      recipient: conversation.participants.find((p: ObjectId) => !p.equals(new ObjectId(user.id))),
+      recipient: conversation.participants.find(
+        (p: ObjectId) => !p.equals(new ObjectId(user.id))
+      ),
       content,
       timestamp: new Date(),
       read: false,
@@ -176,18 +193,29 @@ export async function POST(request: Request) {
 
     const messageResult = await db.collection("messages").insertOne(newMessage);
 
-    await db.collection("conversations").updateOne(
-      { _id: conversation._id },
-      { $set: { lastMessage: { content, timestamp: new Date() }, updatedAt: new Date() } }
-    );
+    await db
+      .collection("conversations")
+      .updateOne(
+        { _id: conversation._id },
+        {
+          $set: {
+            lastMessage: { content, timestamp: new Date() },
+            updatedAt: new Date(),
+          },
+        }
+      );
 
-    return NextResponse.json({
-      conversation,
-      message: { ...newMessage, _id: messageResult.insertedId }
-    }, { status: 201 });
+    return NextResponse.json(
+      {
+        conversation,
+        message: { ...newMessage, _id: messageResult.insertedId },
+      },
+      { status: 201 }
+    );
   } catch (error: unknown) {
     console.error("Error creating conversation or sending message:", error);
-    const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+    const errorMessage =
+      error instanceof Error ? error.message : "An unexpected error occurred";
     return NextResponse.json(
       { error: "An unexpected error occurred", details: errorMessage },
       { status: 500 }

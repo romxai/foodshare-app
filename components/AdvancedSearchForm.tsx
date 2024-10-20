@@ -1,30 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
-interface AdvancedSearchParams {
-  location?: string;
-  datePosted?: string;
-  quantity?: string;
-  expiryDate?: string;
-  postedBy?: string;
-}
-
 interface AdvancedSearchFormProps {
-  onSearch: (params: AdvancedSearchParams) => void;
+  onSearch: (params: any) => void;
 }
 
-const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({ onSearch }) => {
-  const [location, setLocation] = useState('');
-  const [datePosted, setDatePosted] = useState('');
-  const [quantity, setQuantity] = useState('');
-  const [expiryDate, setExpiryDate] = useState('');
-  const [postedBy, setPostedBy] = useState('');
+const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
+  onSearch,
+}) => {
+  const [location, setLocation] = useState("");
+  const [datePosted, setDatePosted] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [expiryDate, setExpiryDate] = useState("");
+  const [postedBy, setPostedBy] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch({ location, datePosted, quantity, expiryDate, postedBy });
+    onSearch({
+      location,
+      datePosted,
+      quantity,
+      expiryDate,
+      postedBy,
+    });
   };
 
   return (
@@ -51,6 +51,7 @@ const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({ onSearch }) => 
         <Label htmlFor="quantity">Quantity</Label>
         <Input
           id="quantity"
+          type="text"
           value={quantity}
           onChange={(e) => setQuantity(e.target.value)}
           placeholder="Enter quantity"
@@ -71,7 +72,7 @@ const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({ onSearch }) => 
           id="postedBy"
           value={postedBy}
           onChange={(e) => setPostedBy(e.target.value)}
-          placeholder="Enter user name"
+          placeholder="Enter username"
         />
       </div>
       <Button type="submit">Apply Filters</Button>

@@ -1,10 +1,5 @@
-import React from 'react';
-import dynamic from 'next/dynamic';
-
-const SignupForm = dynamic(
-  () => import("../../components/AuthForms/SignupForm").then(mod => mod.SignupForm),
-  { ssr: false }
-);
+import React from "react";
+import SignupForm from "../../components/AuthForms/SignupForm";
 
 const SignupPage: React.FC = () => {
   return (

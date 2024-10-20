@@ -7,132 +7,117 @@ import path from "path";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const listingId = searchParams.get("id");
+  const search = searchParams.get("search") || "";
+  const location = searchParams.get("location") || "";
+  const datePosted = searchParams.get("datePosted") || "";
+  const quantity = searchParams.get("quantity") || "";
+  const expiryDate = searchParams.get("expiryDate") || "";
+  const postedBy = searchParams.get("postedBy") || "";
+  const showExpired = searchParams.get("showExpired") === "true";
 
-  if (listingId) {
-    // Fetch a single listing
-    try {
-      const { db } = await connectToDatabase();
-      const listing = await db
-        .collection("foodlistings")
-        .findOne({ _id: new ObjectId(listingId) });
+  try {
+    const { db } = await connectToDatabase();
 
-      if (!listing) {
-        return NextResponse.json(
-          { error: "Listing not found" },
-          { status: 404 }
-        );
-      }
+    const query: any = {
+      expiration: { $gt: new Date() }, // By default, only show non-expired listings
+    };
 
-      const formattedListing = {
-        ...listing,
-        _id: listing._id.toString(),
-        postedBy: listing.postedBy.toString(),
-        expiration: listing.expiration.toISOString(),
-        createdAt: listing.createdAt.toISOString(),
-        updatedAt: listing.updatedAt.toISOString(),
-      };
-
-      return NextResponse.json(formattedListing);
-    } catch (error) {
-      console.error("Error fetching listing:", error);
-      return NextResponse.json(
-        { error: "An unexpected error occurred" },
-        { status: 500 }
-      );
+    if (search) {
+      query.$or = [
+        { foodType: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
     }
-  } else {
-    // Fetch all listings (existing code)
-    const search = searchParams.get("search") || "";
-    const location = searchParams.get("location") || "";
-    const datePosted = searchParams.get("datePosted") || "";
-    const quantity = searchParams.get("quantity") || "";
-    const expiryDate = searchParams.get("expiryDate") || "";
-    const postedBy = searchParams.get("postedBy") || "";
 
-    try {
-      const { db } = await connectToDatabase();
-
-      const query: any = {
-        expiration: { $gt: new Date() }, // Only show non-expired listings
-      };
-
-      if (search) {
-        query.$or = [
-          { foodType: { $regex: search, $options: "i" } },
-          { description: { $regex: search, $options: "i" } },
-        ];
-      }
-
-      if (location) {
-        query.location = { $regex: location, $options: "i" };
-      }
-
-      if (datePosted) {
-        query.createdAt = { $gte: new Date(datePosted) };
-      }
-
-      if (quantity) {
-        query.quantity = { $regex: quantity, $options: "i" };
-      }
-
-      if (expiryDate) {
-        query.expiration = { $lte: new Date(expiryDate), $gt: new Date() };
-      }
-
-      if (postedBy) {
-        query.postedBy = new ObjectId(postedBy);
-      }
-
-      const listings = await db
-        .collection("foodlistings")
-        .aggregate([
-          { $match: query },
-          {
-            $lookup: {
-              from: "users",
-              let: { postedById: { $toObjectId: "$postedBy" } },
-              pipeline: [
-                { $match: { $expr: { $eq: ["$_id", "$$postedById"] } } },
-              ],
-              as: "userDetails",
-            },
-          },
-          {
-            $project: {
-              foodType: 1,
-              description: 1,
-              quantity: 1,
-              quantityUnit: 1, // Make sure this line is present
-              expiration: 1,
-              location: 1,
-              createdAt: 1,
-              updatedAt: 1,
-              imagePaths: 1,
-              postedBy: { $arrayElemAt: ["$userDetails.name", 0] },
-              postedById: "$postedBy",
-            },
-          },
-        ])
-        .toArray();
-
-      const formattedListings = listings.map((listing) => ({
-        ...listing,
-        _id: listing._id.toString(),
-        expiration: listing.expiration.toISOString(),
-        createdAt: listing.createdAt.toISOString(),
-        updatedAt: listing.updatedAt.toISOString(),
-      }));
-
-      //console.log("Formatted listings:", formattedListings);
-      return NextResponse.json(formattedListings);
-    } catch (error) {
-      console.error("Error fetching listings:", error);
-      return NextResponse.json(
-        { error: "An unexpected error occurred" },
-        { status: 500 }
-      );
+    if (location) {
+      query.location = { $regex: location, $options: "i" };
     }
+
+    if (datePosted) {
+      const startOfDay = new Date(datePosted);
+      const endOfDay = new Date(datePosted);
+      endOfDay.setDate(endOfDay.getDate() + 1);
+      query.createdAt = { $gte: startOfDay, $lt: endOfDay };
+    }
+
+    if (quantity) {
+      query.quantity = quantity; // Compare as string
+    }
+
+    if (expiryDate) {
+      const startOfDay = new Date(expiryDate);
+      const endOfDay = new Date(expiryDate);
+      endOfDay.setDate(endOfDay.getDate() + 1);
+      query.expiration = { $gte: startOfDay, $lt: endOfDay };
+    }
+
+    if (postedBy) {
+      const user = await db
+        .collection("users")
+        .findOne({ name: { $regex: postedBy, $options: "i" } });
+      if (user) {
+        query.postedBy = user._id.toString();
+      } else {
+        // If no user found, return empty result
+        return NextResponse.json([]);
+      }
+    }
+
+    // If showExpired is true, remove the expiration filter
+    if (showExpired) {
+      delete query.expiration;
+    }
+
+    console.log("Query:", query);
+
+    const listings = await db
+      .collection("foodlistings")
+      .aggregate([
+        { $match: query },
+        {
+          $lookup: {
+            from: "users",
+            let: { postedById: { $toObjectId: "$postedBy" } },
+            pipeline: [
+              { $match: { $expr: { $eq: ["$_id", "$$postedById"] } } },
+            ],
+            as: "userDetails",
+          },
+        },
+        {
+          $project: {
+            foodType: 1,
+            description: 1,
+            quantity: 1,
+            quantityUnit: 1,
+            expiration: 1,
+            location: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            imagePaths: 1,
+            postedBy: { $arrayElemAt: ["$userDetails.name", 0] },
+            postedById: "$postedBy",
+          },
+        },
+      ])
+      .toArray();
+
+    const formattedListings = listings.map((listing) => ({
+      ...listing,
+      _id: listing._id.toString(),
+      expiration: listing.expiration.toISOString(),
+      createdAt: listing.createdAt.toISOString(),
+      updatedAt: listing.updatedAt.toISOString(),
+    }));
+
+    console.log("Formatted listings:", formattedListings);
+    return NextResponse.json(formattedListings);
+  } catch (error) {
+    console.error("Error fetching listings:", error);
+    return NextResponse.json(
+      { error: "An unexpected error occurred" },
+      { status: 500 }
+    );
   }
 }
 
@@ -221,4 +206,3 @@ const ensureDirectoryExists = async (directory: string) => {
     console.error("Error creating directory:", error);
   }
 };
-

@@ -5,15 +5,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { getCurrentUser } from "../lib/auth";
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import Image from "next/image";
 
 interface CreateListingFormProps {
   onListingCreated: () => void;
+  onClose: () => void;
 }
 
 export default function CreateListingForm({
   onListingCreated,
+  onClose,
 }: CreateListingFormProps) {
   const [formData, setFormData] = useState({
     foodType: "",
@@ -29,7 +30,6 @@ export default function CreateListingForm({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
   const handleChange = (
@@ -67,18 +67,21 @@ export default function CreateListingForm({
         setError("You can only upload up to 5 images");
         return;
       }
-      setFormData(prev => ({ ...prev, images: [...prev.images, ...newImages] }));
-      const newPreviewUrls = newImages.map(file => URL.createObjectURL(file));
-      setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
+      setFormData((prev) => ({
+        ...prev,
+        images: [...prev.images, ...newImages],
+      }));
+      const newPreviewUrls = newImages.map((file) => URL.createObjectURL(file));
+      setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
     }
   };
 
   const removeImage = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index)
+      images: prev.images.filter((_, i) => i !== index),
     }));
-    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -102,15 +105,17 @@ export default function CreateListingForm({
       }
 
       // Combine date and time for expiration
-      const expiration = new Date(`${formData.expirationDate}T${formData.expirationTime}`);
+      const expiration = new Date(
+        `${formData.expirationDate}T${formData.expirationTime}`
+      );
 
       const formDataToSend = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
-        if (key !== 'images') {
+        if (key !== "images") {
           formDataToSend.append(key, value as string);
         }
       });
-      formDataToSend.append('expiration', expiration.toISOString());
+      formDataToSend.append("expiration", expiration.toISOString());
 
       formData.images.forEach((image, index) => {
         formDataToSend.append(`image${index}`, image);
@@ -136,18 +141,7 @@ export default function CreateListingForm({
       console.log("Listing created successfully:", data);
 
       onListingCreated();
-      setFormData({
-        foodType: "",
-        description: "",
-        quantity: "",
-        quantityType: "solid",
-        quantityUnit: "Kg",
-        source: "",
-        expirationDate: "",
-        expirationTime: "00:00",
-        location: "",
-        images: [],
-      });
+      onClose();
     } catch (err) {
       console.error("Error in handleSubmit:", err);
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -274,7 +268,7 @@ export default function CreateListingForm({
                 alt={`Preview ${index + 1}`}
                 width={100}
                 height={100}
-                style={{ objectFit: 'cover' }}
+                style={{ objectFit: "cover" }}
               />
               <button
                 type="button"
@@ -288,7 +282,10 @@ export default function CreateListingForm({
         </div>
       </div>
       {error && <p className="text-red-500">{error}</p>}
-      <Button type="submit" disabled={isSubmitting || formData.images.length === 0}>
+      <Button
+        type="submit"
+        disabled={isSubmitting || formData.images.length === 0}
+      >
         {isSubmitting ? "Creating..." : "Create Listing"}
       </Button>
     </form>
