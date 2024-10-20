@@ -12,10 +12,11 @@ export interface FoodListing {
   quantity: string;
   expiration: string;
   location: string;
-  postedBy: string; // This should be the user ID
+  postedBy: string;
+  postedById: string;
   createdAt: string;
   updatedAt: string;
-  imagePaths: string[];
+  imagePaths?: string[];
 }
 
 // ... other types
