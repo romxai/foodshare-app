@@ -28,6 +28,13 @@ import {
   PlusIcon,
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 const CreateListingForm = dynamic(
   () => import("@/components/CreateListingForm"),
@@ -154,57 +161,56 @@ const FoodListings: React.FC = () => {
     return new Date(dateString).toLocaleDateString();
   }, []);
 
+  const getBadgeStyle = (timeLeft: { value: number; unit: string }) => {
+    if (timeLeft.value === "Expired") {
+      return "bg-red-500 text-white";
+    } else if (timeLeft.unit === "hour" || timeLeft.unit === "hours") {
+      return "bg-yellow-500 text-black";
+    } else {
+      return "bg-green-500 text-white";
+    }
+  };
+
   const FoodListing = ({ listing }: { listing: FoodListing }) => {
     const postedByUser = users[listing.postedBy];
-    const isOwnListing = user && listing.postedBy === user.id;
-
-    console.log("Listing:", listing);
-    console.log("Current user:", user);
-    console.log("Is own listing:", isOwnListing);
-
+    const isOwnListing = user && listing.postedBy === user._id;
     const timeLeft = getTimeLeft(listing.expiration);
-
-    const getBadgeStyle = () => {
-      if (timeLeft.value === "Expired") {
-        return "bg-red-500 text-white";
-      } else if (timeLeft.unit === "hour" || timeLeft.unit === "hours") {
-        return "bg-yellow-500 text-black";
-      } else {
-        return "bg-green-500 text-white";
-      }
-    };
 
     return (
       <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]">
         <div className="relative h-48">
           {listing.imagePaths && listing.imagePaths.length > 0 ? (
-            <Image
-              src={
-                listing.imagePaths[0].startsWith("/")
-                  ? listing.imagePaths[0]
-                  : `/${listing.imagePaths[0]}`
-              }
-              alt={listing.foodType}
-              layout="fill"
-              objectFit="cover"
-              className="transition-transform duration-300 hover:scale-110"
-              onClick={() => {
-                if (listing.imagePaths && listing.imagePaths.length > 0) {
-                  setFullScreenImage(
-                    listing.imagePaths[0].startsWith("/")
-                      ? listing.imagePaths[0]
-                      : `/${listing.imagePaths[0]}`
-                  );
-                }
-              }}
-            />
+            <Carousel className="w-full h-full">
+              <CarouselContent>
+                {listing.imagePaths.map((imagePath, index) => (
+                  <CarouselItem key={index}>
+                    <div className="relative h-48 w-full">
+                      <Image
+                        src={imagePath.startsWith("/") ? imagePath : `/${imagePath}`}
+                        alt={`${listing.foodType} - Image ${index + 1}`}
+                        layout="fill"
+                        objectFit="cover"
+                        className="transition-transform duration-300 hover:scale-110"
+                        onClick={() => setFullScreenImage(imagePath.startsWith("/") ? imagePath : `/${imagePath}`)}
+                      />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              {listing.imagePaths.length > 1 && (
+                <>
+                  <CarouselPrevious className="left-2" />
+                  <CarouselNext className="right-2" />
+                </>
+              )}
+            </Carousel>
           ) : (
             <div className="w-full h-full bg-gray-700 flex items-center justify-center">
               <span className="text-gray-500">No image available</span>
             </div>
           )}
           <Badge
-            className={`absolute top-2 right-2 ${getBadgeStyle()} px-2 py-1 text-xs font-semibold rounded-full`}
+            className={`absolute top-2 right-2 z-10 ${getBadgeStyle(timeLeft)} px-2 py-1 text-xs font-semibold rounded-full`}
           >
             {timeLeft.value === "Expired"
               ? "Expired"
@@ -212,12 +218,8 @@ const FoodListings: React.FC = () => {
           </Badge>
         </div>
         <div className="p-4">
-          <h3 className="text-xl font-bold text-green-400 mb-2">
-            {listing.foodType}
-          </h3>
-          <p className="text-gray-300 mb-4 line-clamp-2">
-            {listing.description}
-          </p>
+          <h3 className="text-xl font-bold text-green-400 mb-2">{listing.foodType}</h3>
+          <p className="text-gray-300 mb-4 line-clamp-2">{listing.description}</p>
           <div className="grid grid-cols-2 gap-2 mb-4 text-sm">
             <div className="flex items-center text-gray-400">
               <CalendarIcon className="h-4 w-4 mr-1" />
@@ -231,11 +233,9 @@ const FoodListings: React.FC = () => {
               <UserIcon className="h-4 w-4 mr-1" />
               <span>{postedByUser ? postedByUser.name : "Unknown"}</span>
             </div>
-          </div>
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-lg font-semibold text-gray-200">
+            <div className="text-gray-200 font-semibold">
               {listing.quantity} {listing.quantityUnit}
-            </span>
+            </div>
           </div>
           <Button
             onClick={() => handleMessageSeller(listing)}

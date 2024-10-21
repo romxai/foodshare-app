@@ -26,6 +26,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import EditListingForm from "./EditListingForm";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface UserActivityProps {
   user: User;
@@ -158,103 +165,94 @@ const UserActivity: React.FC<UserActivityProps> = ({ user }) => {
     <div className="flex h-screen bg-gray-900 text-gray-100">
       <Sidebar onLogout={handleLogout} />
       <div className="flex-1 overflow-auto p-8">
-        <h1 className="text-3xl font-bold mb-8 text-green-400">
-          Your Food Listings
-        </h1>
+        <h1 className="text-3xl font-bold mb-8 text-green-400">Your Food Listings</h1>
         {posts.length === 0 ? (
           <p>You haven't posted any food listings yet.</p>
         ) : (
-          posts.map((post) => {
-            const timeLeft = getTimeLeft(post.expiration);
-            const isExpired = timeLeft.value === "Expired";
-            return (
-              <Card
-                key={post._id}
-                className={`mb-6 bg-gray-800 text-gray-100 overflow-hidden transition-shadow duration-300 hover:shadow-lg rounded-md group relative ${
-                  isExpired ? "opacity-75" : ""
-                }`}
-              >
-                {isExpired && (
-                  <div className="absolute inset-0 bg-gray-900 opacity-50 pointer-events-none"></div>
-                )}
-                <CardHeader className="p-4 border-b border-gray-700">
-                  <div className="flex justify-between items-start">
-                    <CardTitle
-                      className={`text-xl font-bold ${
-                        isExpired ? "text-gray-400" : "text-green-400"
-                      }`}
-                    >
-                      {post.foodType}
-                    </CardTitle>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {posts.map((post) => {
+              const timeLeft = getTimeLeft(post.expiration);
+              return (
+                <div key={post._id} className="bg-gray-800 rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]">
+                  <div className="relative h-48">
+                    {post.imagePaths && post.imagePaths.length > 0 ? (
+                      <Carousel className="w-full h-full">
+                        <CarouselContent>
+                          {post.imagePaths.map((imagePath, index) => (
+                            <CarouselItem key={index}>
+                              <div className="relative h-48 w-full">
+                                <Image
+                                  src={imagePath.startsWith("/") ? imagePath : `/${imagePath}`}
+                                  alt={`${post.foodType} - Image ${index + 1}`}
+                                  layout="fill"
+                                  objectFit="cover"
+                                  className="transition-transform duration-300 hover:scale-110"
+                                />
+                              </div>
+                            </CarouselItem>
+                          ))}
+                        </CarouselContent>
+                        {post.imagePaths.length > 1 && (
+                          <>
+                            <CarouselPrevious className="left-2" />
+                            <CarouselNext className="right-2" />
+                          </>
+                        )}
+                      </Carousel>
+                    ) : (
+                      <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                        <span className="text-gray-500">No image available</span>
+                      </div>
+                    )}
                     <Badge
-                      variant="custom"
-                      className={`${getBadgeStyle(timeLeft)} rounded-md`}
+                      className={`absolute top-2 right-2 z-10 ${getBadgeStyle(timeLeft)} px-2 py-1 text-xs font-semibold rounded-full`}
                     >
                       {timeLeft.value === "Expired"
                         ? "Expired"
                         : `${timeLeft.value} ${timeLeft.unit} left`}
                     </Badge>
                   </div>
-                </CardHeader>
-                <CardContent className="p-4 relative">
-                  <p className="text-gray-300 mb-4">{post.description}</p>
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="flex items-center">
-                      <CalendarIcon className="h-5 w-5 text-gray-400 mr-2" />
-                      <span className="text-sm text-gray-300">
-                        Expires: {formatDate(post.expiration)}
-                      </span>
+                  <div className="p-4">
+                    <h3 className="text-xl font-bold text-green-400 mb-2">{post.foodType}</h3>
+                    <p className="text-gray-300 mb-4 line-clamp-2">{post.description}</p>
+                    <div className="grid grid-cols-2 gap-2 mb-4 text-sm">
+                      <div className="flex items-center text-gray-400">
+                        <CalendarIcon className="h-4 w-4 mr-1" />
+                        <span>{formatDate(post.expiration)}</span>
+                      </div>
+                      <div className="flex items-center text-gray-400">
+                        <MapPinIcon className="h-4 w-4 mr-1" />
+                        <span>{post.location}</span>
+                      </div>
+                      <div className="flex items-center text-gray-400">
+                        <UserIcon className="h-4 w-4 mr-1" />
+                        <span>Posted by you</span>
+                      </div>
+                      <div className="text-gray-200 font-semibold">
+                        {post.quantity} {post.quantityUnit}
+                      </div>
                     </div>
-                    <div className="flex items-center">
-                      <MapPinIcon className="h-5 w-5 text-gray-400 mr-2" />
-                      <span className="text-sm text-gray-300">
-                        {post.location}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-lg font-semibold text-gray-200">
-                      {post.quantity} {post.quantityUnit}
-                    </span>
-                    <div className="flex items-center text-sm text-gray-400">
-                      <UserIcon className="h-4 w-4 mr-1" />
-                      Posted: {formatDate(post.createdAt)}
-                    </div>
-                  </div>
-                  {post.imagePaths && post.imagePaths.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {post.imagePaths.map((path, index) => (
-                        <Image
-                          key={index}
-                          src={path.startsWith("/") ? path : `/${path}`}
-                          alt={`${post.foodType} - Image ${index + 1}`}
-                          width={80}
-                          height={80}
-                          className="rounded-md object-cover"
-                        />
-                      ))}
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gray-800 bg-opacity-90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="flex space-x-4">
+                    <div className="flex space-x-2">
                       <Button
                         variant="outline"
+                        className="flex-1"
                         onClick={() => handleEditClick(post)}
                       >
-                        Edit Listing
+                        Edit
                       </Button>
                       <Button
                         variant="destructive"
+                        className="flex-1"
                         onClick={() => handleDeleteClick(post._id)}
                       >
-                        Delete Listing
+                        Delete
                       </Button>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
