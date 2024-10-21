@@ -5,119 +5,38 @@ import { verifyToken } from "@/lib/auth";
 import fs from "fs/promises";
 import path from "path";
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const search = searchParams.get("search") || "";
-  const location = searchParams.get("location") || "";
-  const datePosted = searchParams.get("datePosted") || "";
-  const quantity = searchParams.get("quantity") || "";
-  const expiryDate = searchParams.get("expiryDate") || "";
-  const postedBy = searchParams.get("postedBy") || "";
-  const showExpired = searchParams.get("showExpired") === "true";
-
+export async function GET() {
   try {
     const { db } = await connectToDatabase();
-
-    const query: any = {
-      expiration: { $gt: new Date() }, // By default, only show non-expired listings
-    };
-
-    if (search) {
-      query.$or = [
-        { foodType: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } },
-      ];
-    }
-
-    if (location) {
-      query.location = { $regex: location, $options: "i" };
-    }
-
-    if (datePosted) {
-      const startOfDay = new Date(datePosted);
-      const endOfDay = new Date(datePosted);
-      endOfDay.setDate(endOfDay.getDate() + 1);
-      query.createdAt = { $gte: startOfDay, $lt: endOfDay };
-    }
-
-    if (quantity) {
-      query.quantity = quantity; // Compare as string
-    }
-
-    if (expiryDate) {
-      const startOfDay = new Date(expiryDate);
-      const endOfDay = new Date(expiryDate);
-      endOfDay.setDate(endOfDay.getDate() + 1);
-      query.expiration = { $gte: startOfDay, $lt: endOfDay };
-    }
-
-    if (postedBy) {
-      const user = await db
-        .collection("users")
-        .findOne({ name: { $regex: postedBy, $options: "i" } });
-      if (user) {
-        query.postedBy = user._id.toString();
-      } else {
-        // If no user found, return empty result
-        return NextResponse.json([]);
-      }
-    }
-
-    // If showExpired is true, remove the expiration filter
-    if (showExpired) {
-      delete query.expiration;
-    }
-
-    console.log("Query:", query);
-
-    const listings = await db
-      .collection("foodlistings")
+    const listings = await db.collection("foodlistings")
       .aggregate([
-        { $match: query },
         {
           $lookup: {
             from: "users",
-            let: { postedById: { $toObjectId: "$postedBy" } },
-            pipeline: [
-              { $match: { $expr: { $eq: ["$_id", "$$postedById"] } } },
-            ],
-            as: "userDetails",
-          },
+            localField: "postedBy",
+            foreignField: "_id",
+            as: "postedByUser"
+          }
+        },
+        {
+          $addFields: {
+            postedByUsername: { $arrayElemAt: ["$postedByUser.name", 0] }
+          }
         },
         {
           $project: {
-            foodType: 1,
-            description: 1,
-            quantity: 1,
-            quantityUnit: 1,
-            expiration: 1,
-            location: 1,
-            createdAt: 1,
-            updatedAt: 1,
-            imagePaths: 1,
-            postedBy: { $arrayElemAt: ["$userDetails.name", 0] },
-            postedById: "$postedBy",
-          },
-        },
+            postedByUser: 0
+          }
+        }
       ])
       .toArray();
-
-    const formattedListings = listings.map((listing) => ({
-      ...listing,
-      _id: listing._id.toString(),
-      expiration: listing.expiration.toISOString(),
-      createdAt: listing.createdAt.toISOString(),
-      updatedAt: listing.updatedAt.toISOString(),
-    }));
-
-    console.log("Formatted listings:", formattedListings);
-    return NextResponse.json(formattedListings);
+    
+    console.log("API: Fetched listings:", listings.length);
+    
+    return NextResponse.json(listings);
   } catch (error) {
-    console.error("Error fetching listings:", error);
-    return NextResponse.json(
-      { error: "An unexpected error occurred" },
-      { status: 500 }
-    );
+    console.error("API: Error fetching listings:", error);
+    return NextResponse.json({ error: "Failed to fetch listings" }, { status: 500 });
   }
 }
 
@@ -214,26 +133,31 @@ export async function PUT(request: Request) {
     const { db } = await connectToDatabase();
     const formData = await request.formData();
     const updateData: any = {};
-    const listingId = formData.get('id') as string;
+    const listingId = formData.get("id") as string;
 
     if (!listingId) {
-      return NextResponse.json({ error: "Listing ID is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Listing ID is required" },
+        { status: 400 }
+      );
     }
 
     // Process form data
-    for (const [key, value] of formData.entries()) {
-      if (key.startsWith('image')) {
+    for (const [key, value] of Array.from(formData.entries())) {
+      if (key.startsWith("image")) {
         // Handle image uploads
         // You may need to implement image upload logic here
-      } else if (key !== 'id') {
+      } else if (key !== "id") {
         updateData[key] = value;
       }
     }
 
-    const result = await db.collection("foodlistings").updateOne(
-      { _id: new ObjectId(listingId), postedBy: user.id },
-      { $set: updateData }
-    );
+    const result = await db
+      .collection("foodlistings")
+      .updateOne(
+        { _id: new ObjectId(listingId), postedBy: user.id },
+        { $set: updateData }
+      );
 
     if (result.matchedCount === 0) {
       return NextResponse.json(
@@ -268,10 +192,13 @@ export async function DELETE(request: Request) {
   try {
     const { db } = await connectToDatabase();
     const { searchParams } = new URL(request.url);
-    const listingId = searchParams.get('id');
+    const listingId = searchParams.get("id");
 
     if (!listingId) {
-      return NextResponse.json({ error: "Listing ID is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Listing ID is required" },
+        { status: 400 }
+      );
     }
 
     const result = await db.collection("foodlistings").deleteOne({

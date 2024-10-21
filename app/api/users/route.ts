@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { verifyToken } from "@/lib/auth";
+import { ObjectId } from "mongodb";
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get("Authorization");
@@ -37,5 +38,22 @@ export async function GET(request: Request) {
       { error: "An unexpected error occurred" },
       { status: 500 }
     );
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const { userIds } = await request.json();
+    const { db } = await connectToDatabase();
+    
+    const users = await db.collection("users")
+      .find({ _id: { $in: userIds.map((id: string) => new ObjectId(id)) } })
+      .project({ password: 0 }) // Exclude password field
+      .toArray();
+
+    return NextResponse.json(users);
+  } catch (error) {
+    console.error("API: Error fetching users:", error);
+    return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 });
   }
 }

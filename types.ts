@@ -1,8 +1,8 @@
 export interface User {
-  id: string;
+  _id: string;
   name: string;
   email: string;
-  location: string;
+  // Add other user fields as needed
 }
 
 export interface FoodListing {
@@ -14,12 +14,10 @@ export interface FoodListing {
   quantityUnit: string;
   expiration: string;
   location: string;
+  imagePaths?: string[];
   postedBy: string;
-  postedById: string;
   createdAt: string;
   updatedAt: string;
-  imagePaths?: string[];
-  isNew?: boolean;
 }
 
 // ... other types

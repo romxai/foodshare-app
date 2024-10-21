@@ -1,7 +1,14 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { HomeIcon, MessageSquareIcon, SettingsIcon, LogOutIcon, MenuIcon, ActivityIcon } from "lucide-react";
+import {
+  HomeIcon,
+  MessageSquareIcon,
+  SettingsIcon,
+  LogOutIcon,
+  ActivityIcon,
+} from "lucide-react";
 
 interface SidebarProps {
   onLogout: () => void;
@@ -23,37 +30,57 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout }) => {
           size="icon"
           onClick={() => setSidebarOpen(!sidebarOpen)}
         >
-          <MenuIcon className="h-6 w-6" />
+          <Image src="/icons/hamburger.svg" alt="Menu" width={24} height={24} />
         </Button>
       </div>
       <nav className="mt-8">
         <ul className="space-y-2">
           <li>
-            <Button variant="ghost" className="w-full justify-start" onClick={() => router.push("/")}>
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={() => router.push("/")}
+            >
               <HomeIcon className="h-5 w-5 mr-2" />
               {sidebarOpen && "Home"}
             </Button>
           </li>
           <li>
-            <Button variant="ghost" className="w-full justify-start" onClick={() => router.push("/messages")}>
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={() => router.push("/messages")}
+            >
               <MessageSquareIcon className="h-5 w-5 mr-2" />
               {sidebarOpen && "Messages"}
             </Button>
           </li>
           <li>
-            <Button variant="ghost" className="w-full justify-start" onClick={() => router.push("/account")}>
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={() => router.push("/account")}
+            >
               <ActivityIcon className="h-5 w-5 mr-2" />
               {sidebarOpen && "Activity"}
             </Button>
           </li>
           <li>
-            <Button variant="ghost" className="w-full justify-start" onClick={() => router.push("/settings")}>
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={() => router.push("/settings")}
+            >
               <SettingsIcon className="h-5 w-5 mr-2" />
               {sidebarOpen && "Settings"}
             </Button>
           </li>
           <li>
-            <Button variant="ghost" className="w-full justify-start" onClick={onLogout}>
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={onLogout}
+            >
               <LogOutIcon className="h-5 w-5 mr-2" />
               {sidebarOpen && "Logout"}
             </Button>
