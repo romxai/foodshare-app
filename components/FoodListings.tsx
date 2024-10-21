@@ -156,7 +156,7 @@ const FoodListings: React.FC = () => {
 
   const FoodListing = ({ listing }: { listing: FoodListing }) => {
     const postedByUser = users[listing.postedBy];
-    const isOwnListing = user && listing.postedBy === user._id;
+    const isOwnListing = user && listing.postedBy === user.id;
 
     console.log("Listing:", listing);
     console.log("Current user:", user);
