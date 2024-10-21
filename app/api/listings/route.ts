@@ -5,44 +5,119 @@ import { verifyToken } from "@/lib/auth";
 import fs from "fs/promises";
 import path from "path";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    console.log("Received search params:", Object.fromEntries(searchParams));
+
+    const search = searchParams.get('search');
+    const location = searchParams.get('location');
+    const datePosted = searchParams.get('datePosted');
+    const quantity = searchParams.get('quantity');
+    const expiryDate = searchParams.get('expiryDate');
+    const postedBy = searchParams.get('postedBy');
+
     const { db } = await connectToDatabase();
-    const listings = await db.collection("foodlistings")
+
+    let query: any = {
+      // Always filter out expired listings
+      expiration: { $gt: new Date() }
+    };
+
+    // Basic search
+    if (search) {
+      console.log("Applying basic search for:", search);
+      query.$and = [
+        {
+          $or: [
+            { foodType: { $regex: search, $options: 'i' } },
+            { description: { $regex: search, $options: 'i' } }
+          ]
+        }
+      ];
+    }
+
+    // Advanced search filters
+    if (location) {
+      console.log("Filtering by location:", location);
+      query.location = { $regex: location, $options: 'i' };
+    }
+
+    if (datePosted) {
+      console.log("Filtering by date posted:", datePosted);
+      const date = new Date(datePosted);
+      query.createdAt = { $gte: date };
+    }
+
+    if (quantity) {
+      console.log("Filtering by quantity:", quantity);
+      const numQuantity = parseFloat(quantity);
+      const lowerBound = (numQuantity * 0.9).toString();
+      const upperBound = (numQuantity * 1.1).toString();
+      query.quantity = { 
+        $gte: lowerBound,
+        $lte: upperBound
+      };
+    }
+
+    if (expiryDate) {
+      console.log("Filtering by expiry date:", expiryDate);
+      const date = new Date(expiryDate);
+      // Ensure the expiry date is after the current date but before or equal to the specified date
+      query.expiration = { $gt: new Date(), $lte: date };
+    }
+
+    if (postedBy) {
+      console.log("Filtering by posted by:", postedBy);
+      const user = await db.collection("users").findOne({ name: { $regex: postedBy, $options: 'i' } });
+      if (user) {
+        query.postedBy = user._id.toString();
+      } else {
+        console.log("No user found for postedBy:", postedBy);
+        return NextResponse.json([]);
+      }
+    }
+
+    console.log("Final query:", JSON.stringify(query, null, 2));
+
+    const listings = await db
+      .collection("foodlistings")
       .aggregate([
+        { $match: query },
         {
           $lookup: {
             from: "users",
             localField: "postedBy",
             foreignField: "_id",
-            as: "postedByUser"
-          }
+            as: "postedByUser",
+          },
         },
         {
           $addFields: {
-            postedByUsername: { $arrayElemAt: ["$postedByUser.name", 0] }
-          }
+            postedByUsername: { $arrayElemAt: ["$postedByUser.name", 0] },
+          },
         },
         {
           $project: {
-            postedByUser: 0
-          }
-        }
+            postedByUser: 0,
+          },
+        },
       ])
       .toArray();
-    
-    console.log("API: Fetched listings:", listings.length);
-    
+
+    console.log("Fetched listings count:", listings.length);
+
     return NextResponse.json(listings);
   } catch (error) {
     console.error("API: Error fetching listings:", error);
-    return NextResponse.json({ error: "Failed to fetch listings" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch listings" },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(request: Request) {
-  //console.log("POST request received for listing creation");
-
   const authHeader = request.headers.get("Authorization");
   if (!authHeader) {
     console.log("Unauthorized: No auth header");
@@ -83,11 +158,18 @@ export async function POST(request: Request) {
     const data = Object.fromEntries(formData.entries());
     const expiration = new Date(data.expiration as string);
 
+    // Convert quantity to a number
+    const quantity = parseFloat(data.quantity as string);
+    if (isNaN(quantity)) {
+      return NextResponse.json({ error: "Invalid quantity" }, { status: 400 });
+    }
+
     const newListing = {
       ...data,
+      quantity, // Store as a number
       expiration,
       imagePaths,
-      postedBy: user.id, // This is correct, we're storing the user ID as a string
+      postedBy: user.id,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -148,7 +230,16 @@ export async function PUT(request: Request) {
         // Handle image uploads
         // You may need to implement image upload logic here
       } else if (key !== "id") {
-        updateData[key] = value;
+        if (key === "quantity") {
+          // Convert quantity to a number
+          const quantity = parseFloat(value as string);
+          if (isNaN(quantity)) {
+            return NextResponse.json({ error: "Invalid quantity" }, { status: 400 });
+          }
+          updateData[key] = quantity;
+        } else {
+          updateData[key] = value;
+        }
       }
     }
 

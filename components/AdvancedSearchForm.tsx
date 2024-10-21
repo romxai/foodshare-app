@@ -21,7 +21,7 @@ const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
     onSearch({
       location,
       datePosted,
-      quantity,
+      quantity: quantity ? parseFloat(quantity) : undefined,
       expiryDate,
       postedBy,
     });
@@ -51,7 +51,8 @@ const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
         <Label htmlFor="quantity">Quantity</Label>
         <Input
           id="quantity"
-          type="text"
+          type="number"
+          step="0.01"
           value={quantity}
           onChange={(e) => setQuantity(e.target.value)}
           placeholder="Enter quantity"

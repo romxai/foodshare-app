@@ -18,7 +18,7 @@ export async function PUT(request: Request) {
   }
 
   try {
-    const { newEmail, currentPassword, newPassword } = await request.json();
+    const { action, newEmail, currentPassword, newPassword } = await request.json();
     const { db } = await connectToDatabase();
 
     const dbUser = await db.collection("users").findOne({ _id: new ObjectId(user.id) });
@@ -27,42 +27,46 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const updateFields: any = {};
-
-    if (newEmail) {
-      // Check if the new email is valid
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(newEmail)) {
-        return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
-      }
-
+    if (action === "updateEmail") {
       // Check if the new email is already in use
       const existingUser = await db.collection("users").findOne({ email: newEmail });
       if (existingUser) {
         return NextResponse.json({ error: "Email already in use" }, { status: 400 });
       }
-    }
 
-    if (newPassword) {
-      if (!currentPassword) {
-        return NextResponse.json({ error: "Current password is required to set a new password" }, { status: 400 });
-      }
+      // Verify current password
       const isPasswordValid = await bcrypt.compare(currentPassword, dbUser.password);
       if (!isPasswordValid) {
         return NextResponse.json({ error: "Invalid current password" }, { status: 400 });
       }
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
-      updateFields.password = hashedPassword;
-    }
 
-    if (Object.keys(updateFields).length > 0) {
+      // Update email
       await db.collection("users").updateOne(
         { _id: new ObjectId(user.id) },
-        { $set: updateFields }
+        { $set: { email: newEmail } }
       );
-    }
 
-    return NextResponse.json({ message: "Settings updated successfully" });
+      return NextResponse.json({ message: "Email updated successfully" });
+    } else if (action === "updatePassword") {
+      // Verify current password
+      const isPasswordValid = await bcrypt.compare(currentPassword, dbUser.password);
+      if (!isPasswordValid) {
+        return NextResponse.json({ error: "Invalid current password" }, { status: 400 });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update password
+      await db.collection("users").updateOne(
+        { _id: new ObjectId(user.id) },
+        { $set: { password: hashedPassword } }
+      );
+
+      return NextResponse.json({ message: "Password updated successfully" });
+    } else {
+      return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+    }
   } catch (error) {
     console.error("Error updating user settings:", error);
     return NextResponse.json(

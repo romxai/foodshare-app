@@ -58,50 +58,72 @@ const FoodListings: React.FC = () => {
   const router = useRouter();
 
   const handleLogout = useCallback(() => {
-    // Implement logout logic here
+    localStorage.removeItem("token");
     router.push("/login");
   }, [router]);
 
-  const handleSearch = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    // Implement search logic here
-  }, []);
+  const fetchListings = useCallback(
+    async (searchQuery: string = "", advancedParams: any = {}) => {
+      try {
+        const queryParams = new URLSearchParams({
+          search: searchQuery,
+          ...advancedParams,
+        });
+        console.log(
+          "Fetching listings with query params:",
+          queryParams.toString()
+        );
+        const response = await fetch(`/api/listings?${queryParams}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch listings");
+        }
+        const data = await response.json();
+        console.log("Fetched listings:", data);
+        setListings(data);
 
-  const handleAdvancedSearch = useCallback((params: any) => {
-    // Implement advanced search logic here
-  }, []);
-
-  const fetchListings = useCallback(async () => {
-    try {
-      const response = await fetch("/api/listings");
-      if (!response.ok) {
-        throw new Error("Failed to fetch listings");
+        // Fetch users for all unique postedBy IDs
+        const userIds = Array.from(
+          new Set(data.map((listing: FoodListing) => listing.postedBy))
+        );
+        const usersResponse = await fetch("/api/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userIds }),
+        });
+        if (!usersResponse.ok) {
+          throw new Error("Failed to fetch users");
+        }
+        const usersData = await usersResponse.json();
+        const usersMap = usersData.reduce(
+          (acc: { [key: string]: User }, user: User) => {
+            acc[user._id] = user;
+            return acc;
+          },
+          {}
+        );
+        setUsers(usersMap);
+      } catch (error) {
+        console.error("Error fetching listings:", error);
+        setError("Failed to fetch listings");
       }
-      const data = await response.json();
-      console.log("Fetched listings:", data);
-      setListings(data);
+    },
+    []
+  );
 
-      // Fetch users for all unique postedBy IDs
-      const userIds = [...new Set(data.map((listing: FoodListing) => listing.postedBy))];
-      const usersResponse = await fetch("/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userIds }),
-      });
-      if (!usersResponse.ok) {
-        throw new Error("Failed to fetch users");
-      }
-      const usersData = await usersResponse.json();
-      const usersMap = usersData.reduce((acc: { [key: string]: User }, user: User) => {
-        acc[user._id] = user;
-        return acc;
-      }, {});
-      setUsers(usersMap);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      setError("Failed to fetch listings");
-    }
-  }, []);
+  const handleSearch = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      fetchListings(search);
+    },
+    [search, fetchListings]
+  );
+
+  const handleAdvancedSearch = useCallback(
+    (params: any) => {
+      fetchListings(search, params);
+    },
+    [search, fetchListings]
+  );
 
   const handleMessageSeller = useCallback((listing: FoodListing) => {
     setSelectedListing(listing);
@@ -143,9 +165,6 @@ const FoodListings: React.FC = () => {
   const getTimeLeft = useCallback((expirationDate: string) => {
     const now = new Date();
     const expiration = new Date(expirationDate);
-    if (expiration <= now) {
-      return { value: "Expired", unit: "" };
-    }
     const diffTime = expiration.getTime() - now.getTime();
     const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -162,9 +181,7 @@ const FoodListings: React.FC = () => {
   }, []);
 
   const getBadgeStyle = (timeLeft: { value: number; unit: string }) => {
-    if (timeLeft.value === "Expired") {
-      return "bg-red-500 text-white";
-    } else if (timeLeft.unit === "hour" || timeLeft.unit === "hours") {
+    if (timeLeft.unit === "hours") {
       return "bg-yellow-500 text-black";
     } else {
       return "bg-green-500 text-white";
@@ -173,7 +190,7 @@ const FoodListings: React.FC = () => {
 
   const FoodListing = ({ listing }: { listing: FoodListing }) => {
     const postedByUser = users[listing.postedBy];
-    const isOwnListing = user && listing.postedBy === user._id;
+    const isOwnListing = !!(user && listing.postedBy === user.id);
     const timeLeft = getTimeLeft(listing.expiration);
 
     return (
@@ -186,12 +203,22 @@ const FoodListings: React.FC = () => {
                   <CarouselItem key={index}>
                     <div className="relative h-48 w-full">
                       <Image
-                        src={imagePath.startsWith("/") ? imagePath : `/${imagePath}`}
+                        src={
+                          imagePath.startsWith("/")
+                            ? imagePath
+                            : `/${imagePath}`
+                        }
                         alt={`${listing.foodType} - Image ${index + 1}`}
                         layout="fill"
                         objectFit="cover"
                         className="transition-transform duration-300 hover:scale-110"
-                        onClick={() => setFullScreenImage(imagePath.startsWith("/") ? imagePath : `/${imagePath}`)}
+                        onClick={() =>
+                          setFullScreenImage(
+                            imagePath.startsWith("/")
+                              ? imagePath
+                              : `/${imagePath}`
+                          )
+                        }
                       />
                     </div>
                   </CarouselItem>
@@ -210,16 +237,20 @@ const FoodListings: React.FC = () => {
             </div>
           )}
           <Badge
-            className={`absolute top-2 right-2 z-10 ${getBadgeStyle(timeLeft)} px-2 py-1 text-xs font-semibold rounded-full`}
+            className={`absolute top-2 right-2 z-10 ${getBadgeStyle(
+              timeLeft
+            )} px-2 py-1 text-xs font-semibold rounded-full`}
           >
-            {timeLeft.value === "Expired"
-              ? "Expired"
-              : `${timeLeft.value} ${timeLeft.unit} left`}
+            {`${timeLeft.value} ${timeLeft.unit} left`}
           </Badge>
         </div>
         <div className="p-4">
-          <h3 className="text-xl font-bold text-green-400 mb-2">{listing.foodType}</h3>
-          <p className="text-gray-300 mb-4 line-clamp-2">{listing.description}</p>
+          <h3 className="text-xl font-bold text-green-400 mb-2">
+            {listing.foodType}
+          </h3>
+          <p className="text-gray-300 mb-4 line-clamp-2">
+            {listing.description}
+          </p>
           <div className="grid grid-cols-2 gap-2 mb-4 text-sm">
             <div className="flex items-center text-gray-400">
               <CalendarIcon className="h-4 w-4 mr-1" />
@@ -259,8 +290,6 @@ const FoodListings: React.FC = () => {
       try {
         const currentUser = await getCurrentUser();
         setUser(currentUser);
-        console.log("Current user:", currentUser);
-
         await fetchListings();
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -271,35 +300,26 @@ const FoodListings: React.FC = () => {
     };
 
     fetchData();
+
+    return () => {
+      // Cleanup function
+      setListings([]);
+      setUser(null);
+      setError(null);
+    };
   }, [fetchListings]);
 
   return (
     <div className="flex h-screen bg-gray-900 text-gray-100">
       <Sidebar onLogout={handleLogout} />
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-auto p-4 ml-16">
         <h1 className="text-3xl font-bold mb-8 text-green-400">
           Food Listings
         </h1>
 
-        {isLoading && <p>Loading...</p>}
-        {error && <p className="text-red-500">{error}</p>}
-
-        {!isLoading && !error && (
-          <>
-            {listings.length === 0 ? (
-              <p>No active listings available</p>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {listings.map((listing) => (
-                  <FoodListing key={listing._id} listing={listing} />
-                ))}
-              </div>
-            )}
-          </>
-        )}
-
+        {/* Search and Advanced Search */}
         <form onSubmit={handleSearch} className="mb-8">
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col md:flex-row gap-4 mb-4">
             <div className="flex-1 relative">
               <Input
                 type="text"
@@ -325,11 +345,27 @@ const FoodListings: React.FC = () => {
             </Button>
           </div>
         </form>
-
         {showAdvancedSearch && (
           <div className="mb-8 bg-gray-800 p-6 rounded-lg">
             <AdvancedSearchForm onSearch={handleAdvancedSearch} />
           </div>
+        )}
+
+        {/* Listings */}
+        {isLoading && <p>Loading...</p>}
+        {error && <p className="text-red-500">{error}</p>}
+        {!isLoading && !error && (
+          <>
+            {listings.length === 0 ? (
+              <p>No active listings available</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {listings.map((listing) => (
+                  <FoodListing key={listing._id} listing={listing} />
+                ))}
+              </div>
+            )}
+          </>
         )}
 
         {user && (
@@ -339,26 +375,27 @@ const FoodListings: React.FC = () => {
                 <PlusIcon className="h-6 w-6" />
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-gray-800 text-gray-100">
+            <DialogContent className="bg-gray-800 text-gray-100 sm:max-w-[425px] max-w-[90vw] w-full">
               <DialogHeader>
                 <DialogTitle className="text-green-400">
                   Create New Food Listing
                 </DialogTitle>
               </DialogHeader>
-              <CreateListingForm
-                onListingCreated={fetchListings}
-                onClose={() => {}}
-              />
+              <div className="max-h-[70vh] overflow-y-auto">
+                <CreateListingForm
+                  onListingCreated={fetchListings}
+                  onClose={() => {}}
+                />
+              </div>
             </DialogContent>
           </Dialog>
         )}
-
         {selectedListing && (
           <Dialog
             open={!!selectedListing}
             onOpenChange={() => setSelectedListing(null)}
           >
-            <DialogContent className="bg-gray-800 text-gray-100">
+            <DialogContent className="bg-gray-800 text-gray-100 sm:max-w-[425px] max-w-[90vw] w-full">
               <DialogHeader>
                 <DialogTitle className="text-green-400">
                   Message Seller
@@ -367,18 +404,18 @@ const FoodListings: React.FC = () => {
                   Send a message to the seller about this listing.
                 </DialogDescription>
               </DialogHeader>
-              <div>
-                <p className="mb-4">Listing: {selectedListing.foodType}</p>
+              <div className="space-y-4">
+                <p className="mb-2">Listing: {selectedListing.foodType}</p>
                 <Input
                   type="text"
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="Type your message..."
-                  className="mb-4 bg-gray-700 text-gray-100 border-gray-600 focus:border-green-400"
+                  className="bg-gray-700 text-gray-100 border-gray-600 focus:border-green-400"
                 />
                 <Button
                   onClick={sendMessage}
-                  className="bg-green-700 text-white hover:bg-green-800"
+                  className="w-full bg-green-700 text-white hover:bg-green-800"
                 >
                   Send Message
                 </Button>
@@ -386,7 +423,6 @@ const FoodListings: React.FC = () => {
             </DialogContent>
           </Dialog>
         )}
-
         {fullScreenImage && (
           <FullScreenImage
             src={fullScreenImage}

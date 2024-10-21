@@ -20,14 +20,25 @@ export default function Messages() {
   >(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [previousMessageCount, setPreviousMessageCount] = useState(0);
   const [showJumpToBottom, setShowJumpToBottom] = useState(false);
   const [hasUserScrolled, setHasUserScrolled] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -246,8 +257,14 @@ export default function Messages() {
   return (
     <div className="flex h-screen bg-gray-900 text-gray-100">
       <Sidebar onLogout={handleLogout} />
-      <div className="flex-1 flex">
-        <div className="w-1/3 border-r border-gray-800">
+      <div className="flex-1 flex ml-16">
+        <div
+          className={`${
+            isMobile && !selectedConversation ? "w-full" : "w-full md:w-1/3"
+          } ${
+            isMobile && selectedConversation ? "hidden" : ""
+          } border-r border-gray-800`}
+        >
           <div className="p-4">
             <h2 className="text-xl font-bold text-green-400">Conversations</h2>
           </div>
@@ -287,7 +304,11 @@ export default function Messages() {
             ))}
           </ScrollArea>
         </div>
-        <div className="w-2/3 flex flex-col">
+        <div
+          className={`${
+            isMobile && !selectedConversation ? "hidden" : "flex-1"
+          } flex flex-col`}
+        >
           {selectedConversation ? (
             <>
               <ScrollArea

@@ -5,21 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
 import { User } from "@/types";
 import { getCurrentUser } from "@/lib/auth";
-import { HomeIcon, MessageSquareIcon, SettingsIcon, LogOutIcon, MenuIcon } from "lucide-react";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { AlertPopup } from "@/components/ui/AlertPopup";
 import Sidebar from "@/components/Sidebar";
+import { UserIcon, MailIcon, LockIcon, MapPinIcon } from "lucide-react";
 
 const UserSettings: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -36,7 +34,11 @@ const UserSettings: React.FC = () => {
   const [passwordError, setPasswordError] = useState("");
   const [emailSuccess, setEmailSuccess] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
-  const [alert, setAlert] = useState<{ type: 'error' | 'success', title: string, message: string } | null>(null);
+  const [alert, setAlert] = useState<{
+    type: "error" | "success";
+    title: string;
+    message: string;
+  } | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -61,6 +63,7 @@ const UserSettings: React.FC = () => {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify({
+          action: "updateEmail",
           newEmail,
           currentPassword: emailUpdatePassword,
         }),
@@ -69,27 +72,44 @@ const UserSettings: React.FC = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setAlert({ type: 'success', title: 'Success', message: 'Email updated successfully' });
+        setAlert({
+          type: "success",
+          title: "Success",
+          message: "Email updated successfully",
+        });
         setUser((prevUser) => ({ ...prevUser!, email: newEmail }));
         setIsEmailDialogOpen(false);
         setEmailUpdatePassword("");
       } else {
         switch (data.error) {
           case "Email already in use":
-            setAlert({ type: 'error', title: 'Error', message: 'This email is already associated with another user.' });
-            break;
-          case "Invalid email format":
-            setAlert({ type: 'error', title: 'Error', message: 'Please enter a valid email address.' });
+            setAlert({
+              type: "error",
+              title: "Error",
+              message: "This email is already associated with another user.",
+            });
             break;
           case "Invalid current password":
-            setAlert({ type: 'error', title: 'Error', message: 'The current password is incorrect.' });
+            setAlert({
+              type: "error",
+              title: "Error",
+              message: "The current password is incorrect.",
+            });
             break;
           default:
-            setAlert({ type: 'error', title: 'Error', message: data.error || 'Failed to update email' });
+            setAlert({
+              type: "error",
+              title: "Error",
+              message: data.error || "Failed to update email",
+            });
         }
       }
     } catch (err) {
-      setAlert({ type: 'error', title: 'Error', message: 'An unexpected error occurred' });
+      setAlert({
+        type: "error",
+        title: "Error",
+        message: "An unexpected error occurred",
+      });
     }
   };
 
@@ -99,7 +119,11 @@ const UserSettings: React.FC = () => {
     setPasswordSuccess("");
 
     if (newPassword !== confirmPassword) {
-      setAlert({ type: 'error', title: 'Error', message: 'New passwords do not match' });
+      setAlert({
+        type: "error",
+        title: "Error",
+        message: "New passwords do not match",
+      });
       return;
     }
 
@@ -111,6 +135,7 @@ const UserSettings: React.FC = () => {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify({
+          action: "updatePassword",
           currentPassword,
           newPassword,
         }),
@@ -119,19 +144,35 @@ const UserSettings: React.FC = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setAlert({ type: 'success', title: 'Success', message: 'Password updated successfully' });
+        setAlert({
+          type: "success",
+          title: "Success",
+          message: "Password updated successfully",
+        });
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
       } else {
         if (data.error === "Invalid current password") {
-          setAlert({ type: 'error', title: 'Error', message: 'The current password is incorrect.' });
+          setAlert({
+            type: "error",
+            title: "Error",
+            message: "The current password is incorrect.",
+          });
         } else {
-          setAlert({ type: 'error', title: 'Error', message: data.error || 'Failed to update password' });
+          setAlert({
+            type: "error",
+            title: "Error",
+            message: data.error || "Failed to update password",
+          });
         }
       }
     } catch (err) {
-      setAlert({ type: 'error', title: 'Error', message: 'An unexpected error occurred' });
+      setAlert({
+        type: "error",
+        title: "Error",
+        message: "An unexpected error occurred",
+      });
     }
   };
 
@@ -141,31 +182,57 @@ const UserSettings: React.FC = () => {
   };
 
   if (!user) {
-    return <div className="flex items-center justify-center h-screen text-white">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen text-white">
+        Loading...
+      </div>
+    );
   }
 
   return (
     <div className="flex h-screen bg-gray-900 text-gray-100">
       <Sidebar onLogout={handleLogout} />
-      <div className="flex-1 overflow-auto p-8">
-        <h1 className="text-3xl font-bold mb-8 text-green-400">User Settings</h1>
-        <ScrollArea className="h-[calc(100vh-10rem)]">
-          {/* User Information Tile */}
-          <Card className="w-full mb-6 bg-gray-800 text-gray-100">
+      <div className="flex-1 overflow-auto p-4 sm:p-8 ml-12 sm:ml-16">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-green-400">
+          User Settings
+        </h1>
+        <div className="max-w-md mx-auto space-y-6">
+          <Card className="bg-gray-800 shadow-lg border border-green-400">
             <CardHeader>
-              <CardTitle className="text-2xl text-green-400">User Information</CardTitle>
+              <CardTitle className="text-xl sm:text-2xl text-green-400">
+                Profile Information
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p><strong>Username:</strong> {user.name}</p>
-              <p><strong>Email:</strong> {user.email}</p>
-              <p><strong>Location:</strong> {user.location}</p>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-4 bg-gray-700 p-3 rounded-lg">
+                <UserIcon className="text-green-400 h-6 w-6" />
+                <div>
+                  <p className="font-medium text-gray-300">Username</p>
+                  <p className="text-lg text-white">{user?.name}</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-4 bg-gray-700 p-3 rounded-lg">
+                <MailIcon className="text-green-400 h-6 w-6" />
+                <div>
+                  <p className="font-medium text-gray-300">Email</p>
+                  <p className="text-lg text-white">{user?.email}</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-4 bg-gray-700 p-3 rounded-lg">
+                <MapPinIcon className="text-green-400 h-6 w-6" />
+                <div>
+                  <p className="font-medium text-gray-300">Location</p>
+                  <p className="text-lg text-white">{user?.location}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
-          {/* Update Email Tile */}
-          <Card className="w-full mb-6 bg-gray-800 text-gray-100">
+          <Card className="bg-gray-800 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-2xl text-green-400">Update Email</CardTitle>
+              <CardTitle className="text-xl sm:text-2xl text-green-400">
+                Update Email
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -179,28 +246,40 @@ const UserSettings: React.FC = () => {
                     className="bg-gray-700 text-gray-100 border-gray-600 focus:border-green-400"
                   />
                 </div>
-                <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="bg-green-700 text-white hover:bg-green-800">
-                      Update Email
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="bg-gray-800 text-gray-100 z-50"> {/* Added z-index */}
+                <Button
+                  onClick={() => setIsEmailDialogOpen(true)}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                >
+                  Update Email
+                </Button>
+                <Dialog
+                  open={isEmailDialogOpen}
+                  onOpenChange={setIsEmailDialogOpen}
+                >
+                  <DialogContent className="bg-gray-800 text-gray-100 sm:max-w-[425px] max-w-[90vw] w-full">
                     <DialogHeader>
-                      <DialogTitle>Confirm Password</DialogTitle>
-                      <DialogDescription>
-                        Please enter your current password to update your email.
-                      </DialogDescription>
+                      <DialogTitle className="text-xl text-green-400">
+                        Confirm Password
+                      </DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4">
+                    <div className="space-y-4 mt-4">
+                      <Label
+                        htmlFor="emailUpdatePassword"
+                        className="text-sm font-medium text-gray-200"
+                      >
+                        Current Password
+                      </Label>
                       <Input
+                        id="emailUpdatePassword"
                         type="password"
-                        placeholder="Current Password"
                         value={emailUpdatePassword}
                         onChange={(e) => setEmailUpdatePassword(e.target.value)}
                         className="bg-gray-700 text-gray-100 border-gray-600 focus:border-green-400"
                       />
-                      <Button onClick={handleEmailUpdate} className="bg-green-700 text-white hover:bg-green-800">
+                      <Button
+                        onClick={handleEmailUpdate}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                      >
                         Confirm Email Update
                       </Button>
                     </div>
@@ -210,10 +289,11 @@ const UserSettings: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Update Password Tile */}
-          <Card className="w-full mb-6 bg-gray-800 text-gray-100">
+          <Card className="bg-gray-800 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-2xl text-green-400">Update Password</CardTitle>
+              <CardTitle className="text-xl sm:text-2xl text-green-400">
+                Update Password
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handlePasswordUpdate} className="space-y-4">
@@ -247,15 +327,16 @@ const UserSettings: React.FC = () => {
                     className="bg-gray-700 text-gray-100 border-gray-600 focus:border-green-400"
                   />
                 </div>
-                {passwordError && <p className="text-red-400 text-sm">{passwordError}</p>}
-                {passwordSuccess && <p className="text-green-400 text-sm">{passwordSuccess}</p>}
-                <Button type="submit" className="bg-green-700 text-white hover:bg-green-800">
+                <Button
+                  type="submit"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                >
                   Update Password
                 </Button>
               </form>
             </CardContent>
           </Card>
-        </ScrollArea>
+        </div>
       </div>
       {alert && (
         <AlertPopup

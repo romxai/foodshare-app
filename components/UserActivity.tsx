@@ -164,8 +164,12 @@ const UserActivity: React.FC<UserActivityProps> = ({ user }) => {
   return (
     <div className="flex h-screen bg-gray-900 text-gray-100">
       <Sidebar onLogout={handleLogout} />
-      <div className="flex-1 overflow-auto p-8">
-        <h1 className="text-3xl font-bold mb-8 text-green-400">Your Food Listings</h1>
+      <div className="flex-1 overflow-auto p-8 ml-16">
+        {" "}
+        {/* Added ml-16 for sidebar width */}
+        <h1 className="text-3xl font-bold mb-8 text-green-400">
+          Your Food Listings
+        </h1>
         {posts.length === 0 ? (
           <p>You haven't posted any food listings yet.</p>
         ) : (
@@ -173,7 +177,10 @@ const UserActivity: React.FC<UserActivityProps> = ({ user }) => {
             {posts.map((post) => {
               const timeLeft = getTimeLeft(post.expiration);
               return (
-                <div key={post._id} className="bg-gray-800 rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]">
+                <div
+                  key={post._id}
+                  className="bg-gray-800 rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]"
+                >
                   <div className="relative h-48">
                     {post.imagePaths && post.imagePaths.length > 0 ? (
                       <Carousel className="w-full h-full">
@@ -182,7 +189,11 @@ const UserActivity: React.FC<UserActivityProps> = ({ user }) => {
                             <CarouselItem key={index}>
                               <div className="relative h-48 w-full">
                                 <Image
-                                  src={imagePath.startsWith("/") ? imagePath : `/${imagePath}`}
+                                  src={
+                                    imagePath.startsWith("/")
+                                      ? imagePath
+                                      : `/${imagePath}`
+                                  }
                                   alt={`${post.foodType} - Image ${index + 1}`}
                                   layout="fill"
                                   objectFit="cover"
@@ -201,11 +212,15 @@ const UserActivity: React.FC<UserActivityProps> = ({ user }) => {
                       </Carousel>
                     ) : (
                       <div className="w-full h-full bg-gray-700 flex items-center justify-center">
-                        <span className="text-gray-500">No image available</span>
+                        <span className="text-gray-500">
+                          No image available
+                        </span>
                       </div>
                     )}
                     <Badge
-                      className={`absolute top-2 right-2 z-10 ${getBadgeStyle(timeLeft)} px-2 py-1 text-xs font-semibold rounded-full`}
+                      className={`absolute top-2 right-2 z-10 ${getBadgeStyle(
+                        timeLeft
+                      )} px-2 py-1 text-xs font-semibold rounded-full`}
                     >
                       {timeLeft.value === "Expired"
                         ? "Expired"
@@ -213,8 +228,12 @@ const UserActivity: React.FC<UserActivityProps> = ({ user }) => {
                     </Badge>
                   </div>
                   <div className="p-4">
-                    <h3 className="text-xl font-bold text-green-400 mb-2">{post.foodType}</h3>
-                    <p className="text-gray-300 mb-4 line-clamp-2">{post.description}</p>
+                    <h3 className="text-xl font-bold text-green-400 mb-2">
+                      {post.foodType}
+                    </h3>
+                    <p className="text-gray-300 mb-4 line-clamp-2">
+                      {post.description}
+                    </p>
                     <div className="grid grid-cols-2 gap-2 mb-4 text-sm">
                       <div className="flex items-center text-gray-400">
                         <CalendarIcon className="h-4 w-4 mr-1" />

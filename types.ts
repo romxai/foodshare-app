@@ -1,7 +1,9 @@
 export interface User {
   _id: string;
+  id: string;
   name: string;
   email: string;
+  location: string;
   // Add other user fields as needed
 }
 
