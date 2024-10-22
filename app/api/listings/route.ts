@@ -19,7 +19,7 @@ export async function GET(request: Request) {
 
     const { db } = await connectToDatabase();
 
-    let query: any = {
+    const query: any = {
       // Always filter out expired listings
       expiration: { $gt: new Date() }
     };
@@ -136,7 +136,7 @@ export async function POST(request: Request) {
     const { db } = await connectToDatabase();
     const formData = await request.formData();
 
-    let imagePaths: string[] = [];
+    const imagePaths: string[] = [];
 
     for (let i = 0; i < 5; i++) {
       const file = formData.get(`image${i}`) as File | null;
