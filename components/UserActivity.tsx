@@ -35,10 +35,9 @@ import {
 } from "@/components/ui/carousel";
 
 interface UserActivityProps {
-  user: User;
 }
 
-const UserActivity: React.FC<UserActivityProps> = ({ user }) => {
+const UserActivity: React.FC<UserActivityProps> = () => {
   const [posts, setPosts] = useState<FoodListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -54,6 +53,7 @@ const UserActivity: React.FC<UserActivityProps> = ({ user }) => {
   }, []);
 
   const fetchActivity = async () => {
+    setLoading(true);
     try {
       const response = await fetch("/api/user/listings", {
         headers: {
