@@ -126,9 +126,18 @@ export default function Messages() {
                 new Date(a.timestamp).getTime() -
                 new Date(b.timestamp).getTime()
             );
-            setMessages(sortedMessages);
-            if (isInitialLoad) {
+            
+            // Check if there are new messages
+            const hasNewMessages = sortedMessages.length > messages.length ||
+              (sortedMessages.length > 0 && messages.length > 0 &&
+               sortedMessages[sortedMessages.length - 1]._id !== messages[messages.length - 1]._id);
+
+            if (hasNewMessages || isInitialLoad) {
+              setMessages(sortedMessages);
               setTimeout(scrollToBottom, 0);
+              if (isInitialLoad) {
+                setIsInitialLoad(false);
+              }
             }
           } else {
             setMessages([]);
@@ -143,7 +152,7 @@ export default function Messages() {
         console.error("Error fetching messages:", error);
       }
     },
-    [isInitialLoad, scrollToBottom]
+    [isInitialLoad, scrollToBottom, messages]
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
