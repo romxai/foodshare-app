@@ -42,6 +42,7 @@ const CreateListingForm = dynamic(
 );
 
 const FoodListings: React.FC = () => {
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [listings, setListings] = useState<FoodListing[]>([]);
   const [users, setUsers] = useState<{ [key: string]: User }>({});
   const [search, setSearch] = useState("");
@@ -56,6 +57,18 @@ const FoodListings: React.FC = () => {
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [showSidebar, setShowSidebar] = useState(false);
   const router = useRouter();
+
+    useEffect(() => {
+      const fetchUser = async () => {
+        const user = await getCurrentUser();
+        if (user) {
+          setCurrentUser(user);
+        } else {
+          router.push("/login");
+        }
+      };
+      fetchUser();
+    }, [router]);
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem("token");

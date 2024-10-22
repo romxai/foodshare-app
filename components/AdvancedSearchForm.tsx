@@ -67,6 +67,7 @@ const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
           onChange={(e) => setExpiryDate(e.target.value)}
         />
       </div>
+      {/* Posted By 
       <div>
         <Label htmlFor="postedBy">Posted By</Label>
         <Input
@@ -76,6 +77,7 @@ const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
           placeholder="Enter username"
         />
       </div>
+      */}
       <Button type="submit">Apply Filters</Button>
     </form>
   );

@@ -48,7 +48,7 @@ const UserActivity: React.FC<UserActivityProps> = ({ user }) => {
   const [editingListing, setEditingListing] = useState<FoodListing | null>(
     null
   );
-
+  
   useEffect(() => {
     fetchActivity();
   }, []);
