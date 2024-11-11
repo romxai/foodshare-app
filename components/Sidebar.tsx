@@ -4,7 +4,6 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   HomeIcon,
-  MessageSquareIcon,
   SettingsIcon,
   LogOutIcon,
   ActivityIcon,
@@ -60,16 +59,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout }) => {
               >
                 <HomeIcon className="h-5 w-5 mr-2" />
                 {sidebarOpen && "Home"}
-              </Button>
-            </li>
-            <li>
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => router.push("/messages")}
-              >
-                <MessageSquareIcon className="h-5 w-5 mr-2" />
-                {sidebarOpen && "Messages"}
               </Button>
             </li>
             <li>

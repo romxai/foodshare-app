@@ -50,10 +50,6 @@ const FoodListings: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [selectedListing, setSelectedListing] = useState<FoodListing | null>(
-    null
-  );
-  const [newMessage, setNewMessage] = useState("");
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [showSidebar, setShowSidebar] = useState(false);
   const router = useRouter();
@@ -137,43 +133,6 @@ const FoodListings: React.FC = () => {
     },
     [search, fetchListings]
   );
-
-  const handleMessageSeller = useCallback((listing: FoodListing) => {
-    setSelectedListing(listing);
-  }, []);
-
-  const sendMessage = useCallback(async () => {
-    if (!selectedListing || !newMessage.trim() || !user) return;
-
-    try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify({
-          content: newMessage,
-          recipientId: selectedListing.postedBy,
-          listingId: selectedListing._id,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setNewMessage("");
-        setSelectedListing(null);
-        router.push(`/messages?conversationId=${data.conversation._id}`);
-      } else {
-        console.error("Failed to send message:", data.error);
-        alert(`Failed to send message: ${data.error}`);
-      }
-    } catch (error) {
-      console.error("Error sending message:", error);
-      alert("An error occurred while sending the message. Please try again.");
-    }
-  }, [selectedListing, newMessage, user, router]);
 
   const getTimeLeft = useCallback((expirationDate: string) => {
     const now = new Date();
@@ -282,15 +241,15 @@ const FoodListings: React.FC = () => {
             </div>
           </div>
           <Button
-            onClick={() => handleMessageSeller(listing)}
             className={`w-full ${
               isOwnListing
                 ? "bg-gray-600 text-gray-400 cursor-not-allowed"
                 : "bg-green-700 text-white hover:bg-green-800"
             }`}
             disabled={isOwnListing}
+            onClick={() => window.location.href = `mailto:${postedByUser?.email}`}
           >
-            {isOwnListing ? "Your Listing" : "Message Seller"}
+            {isOwnListing ? "Your Listing" : "Contact Seller"}
           </Button>
         </div>
       </div>
@@ -399,39 +358,6 @@ const FoodListings: React.FC = () => {
                   onListingCreated={fetchListings}
                   onClose={() => {}}
                 />
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
-        {selectedListing && (
-          <Dialog
-            open={!!selectedListing}
-            onOpenChange={() => setSelectedListing(null)}
-          >
-            <DialogContent className="bg-gray-800 text-gray-100 sm:max-w-[425px] max-w-[90vw] w-full">
-              <DialogHeader>
-                <DialogTitle className="text-green-400">
-                  Message Seller
-                </DialogTitle>
-                <DialogDescription className="text-gray-400">
-                  Send a message to the seller about this listing.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <p className="mb-2">Listing: {selectedListing.foodType}</p>
-                <Input
-                  type="text"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Type your message..."
-                  className="bg-gray-700 text-gray-100 border-gray-600 focus:border-green-400"
-                />
-                <Button
-                  onClick={sendMessage}
-                  className="w-full bg-green-700 text-white hover:bg-green-800"
-                >
-                  Send Message
-                </Button>
               </div>
             </DialogContent>
           </Dialog>
