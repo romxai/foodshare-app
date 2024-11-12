@@ -4,7 +4,7 @@ export interface User {
   name: string;
   email: string;
   location: string;
-  phoneNumber: string;
+  phoneNumber?: string;
   createdAt?: string;
   updatedAt?: string;
   __v?: number;
@@ -25,7 +25,7 @@ export interface FoodListing {
   description: string;
   quantity: string;
   quantityUnit: string;
-  servings: number;
+  servings?: number;
   expiration: string;
   location: string;
   postedBy: string;

@@ -373,7 +373,7 @@ const UserSettings: React.FC = () => {
                               <Input
                                 {...field}
                                 disabled
-                                value={user?.phoneNumber}
+                                value={(user as User & { phoneNumber?: string })?.phoneNumber}
                                 className="bg-[#F9F3F0] border-[#ADA8B3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0 font-['Verdana Pro Cond']"
                               />
                             </div>

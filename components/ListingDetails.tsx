@@ -25,11 +25,16 @@ interface ListingDetailsProps {
   id: string;
 }
 
+// Add interface for seller at the top of the file
+interface SellerWithPhone extends User {
+  phoneNumber?: string;
+}
+
 const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
   useAuthGuard();
   const [listing, setListing] = useState<FoodListing | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [seller, setSeller] = useState<User | null>(null);
+  const [seller, setSeller] = useState<SellerWithPhone | null>(null);
   const [selectedImage, setSelectedImage] = useState<string>("");
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
@@ -196,11 +201,11 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
                       <span>
                         <span className="text-[#1C716F]">Quantity:</span>{" "}
                         <span className="italic">{`${listing.quantity} ${listing.quantityUnit}`}</span>
-                        {listing.servings !== undefined && (
+                        {(listing as FoodListing & { servings?: number }).servings && (
                           <span className="ml-2">
                             • <span className="text-[#1C716F]">Servings:</span>{" "}
                             <span className="italic">
-                              {listing.servings} approx.
+                              {(listing as FoodListing & { servings?: number }).servings} approx.
                             </span>
                           </span>
                         )}
@@ -252,25 +257,18 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
                     <Button
                       className="w-full bg-[#1C716F] hover:bg-[#065553] text-white"
                       onClick={() => {
-                        if (seller?.phoneNumber && listing) {
-                          const formattedDate = new Date(
-                            listing.createdAt
-                          ).toLocaleDateString("en-US", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
+                        if (seller?.phoneNumber && listing && seller?.name) {
+                          const formattedDate = new Date(listing.createdAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
                           });
 
                           const message = `Hello *${seller.name}*,\n\nI am contacting you from FoodShare, i would love to enquire more about your listing on *${listing.foodType}*, posted on _${formattedDate}_.\n\nThank you,\n_${currentUser?.name}._`;
 
-                          const cleanPhone = seller.phoneNumber.replace(
-                            /\D/g,
-                            ""
-                          );
-                          const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
-                            message
-                          )}`;
-                          window.open(whatsappUrl, "_blank");
+                          const cleanPhone = seller.phoneNumber.replace(/\D/g, '');
+                          const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+                          window.open(whatsappUrl, '_blank');
                         }
                       }}
                     >
