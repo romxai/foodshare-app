@@ -24,6 +24,11 @@ const userSchema = new mongoose.Schema(
       required: [true, "Please provide a location"],
       trim: true,
     },
+    phoneNumber: {
+      type: String,
+      required: [true, "Please provide a phone number"],
+      trim: true,
+    },
   },
   { timestamps: true }
 );

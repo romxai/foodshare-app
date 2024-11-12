@@ -1,11 +1,5 @@
-import React from 'react';
-import FoodListings from '../components/FoodListings';
+import HomePage from "@/components/HomePage";
 
-const Home: React.FC = () => {
-  return (
-    <FoodListings />
-
-  );
-};
-
-export default Home;
+export default function Page() {
+  return <HomePage />;
+}

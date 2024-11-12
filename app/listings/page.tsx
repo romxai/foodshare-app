@@ -1,4 +1,6 @@
-import FoodListings from '@/components/FoodListings';
+"use client";
+
+import FoodListings from "@/components/FoodListings";
 
 export default function ListingsPage() {
   return <FoodListings />;

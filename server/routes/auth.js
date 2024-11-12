@@ -16,9 +16,9 @@ const signToken = (id) => {
 router.post("/signup", async (req, res) => {
   try {
     console.log("Received signup request:", req.body);
-    const { name, email, password, location } = req.body;
+    const { name, email, password, location, phoneNumber } = req.body;
 
-    if (!name || !email || !password || !location) {
+    if (!name || !email || !password || !location || !phoneNumber) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -30,7 +30,7 @@ router.post("/signup", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 12);
     console.log("Hashed password during signup:", hashedPassword);
 
-    const user = new User({ name, email, password: hashedPassword, location });
+    const user = new User({ name, email, password: hashedPassword, location, phoneNumber });
 
     await user.save();
     console.log("User created:", {
@@ -81,7 +81,8 @@ router.get("/me", protect, (req, res) => {
     id: req.user._id,
     name: req.user.name,
     email: req.user.email,
-    location: req.user.location
+    location: req.user.location,
+    phoneNumber: req.user.phoneNumber
   }});
 });
 

@@ -5,9 +5,9 @@ import bcrypt from 'bcryptjs';
 
 export async function POST(request: Request) {
   try {
-    const { name, email, password, location } = await request.json();
+    const { name, email, password, location, phoneNumber } = await request.json();
 
-    console.log('Received signup attempt:', { name, email, location });
+    console.log('Received signup attempt:', { name, email, location, phoneNumber });
 
     const { db } = await connectToDatabase();
 
@@ -28,6 +28,7 @@ export async function POST(request: Request) {
       email,
       password: hashedPassword,
       location,
+      phoneNumber,
       createdAt: now,
       updatedAt: now,
       __v: 0
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
 
     const token = jwt.sign({ id: result.insertedId }, process.env.JWT_SECRET as string, { expiresIn: '1h' });
     
-    return NextResponse.json({ token, user: { id: result.insertedId, name, email, location } });
+    return NextResponse.json({ token, user: { id: result.insertedId, name, email, location, phoneNumber } });
   } catch (error) {
     console.error('Signup error:', error);
     return NextResponse.json({ error: 'Signup failed' }, { status: 500 });

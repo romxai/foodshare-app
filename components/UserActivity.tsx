@@ -1,14 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { FoodListing, User } from "../types";
-import Sidebar from "@/components/Sidebar";
 import { useRouter } from "next/navigation";
-import { CalendarIcon, MapPinIcon, UserIcon, Trash2Icon } from "lucide-react";
+import { getCurrentUser } from "@/lib/auth";
+import Navbar from "@/components/Navbar";
+import { CalendarDays, MapPin, Package, Clock, Trash2Icon } from "lucide-react";
+import { motion } from "framer-motion";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import ImageCarousel from "./ImageCarousel";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,18 +28,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import EditListingForm from "./EditListingForm";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+import Footer from "@/components/Footer";
+import { ListingSkeleton } from "@/components/ui/ListingSkeleton";
+import { useAuthCheck } from "@/utils/authCheck";
+import { useAuthGuard } from "@/utils/authGuard";
 
-interface UserActivityProps {
-}
-
-const UserActivity: React.FC<UserActivityProps> = () => {
+const UserActivity: React.FC = () => {
+  useAuthGuard();
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<FoodListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -47,10 +45,22 @@ const UserActivity: React.FC<UserActivityProps> = () => {
   const [editingListing, setEditingListing] = useState<FoodListing | null>(
     null
   );
-  
+
   useEffect(() => {
     fetchActivity();
   }, []);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const user = await getCurrentUser();
+      if (user) {
+        setCurrentUser(user);
+      } else {
+        router.push("/login");
+      }
+    };
+    fetchUser();
+  }, [router]);
 
   const fetchActivity = async () => {
     setLoading(true);
@@ -158,122 +168,189 @@ const UserActivity: React.FC<UserActivityProps> = () => {
     setEditingListing(null);
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
+  const FoodListing = ({
+    listing,
+    index,
+  }: {
+    listing: FoodListing;
+    index: number;
+  }) => {
+    const timeLeft = getTimeLeft(listing.expiration);
+    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+    const [isHovered, setIsHovered] = useState(false);
+    const router = useRouter();
+    const isExpired = timeLeft.value === "Expired";
 
-  return (
-    <div className="flex h-screen bg-gray-900 text-gray-100">
-      <Sidebar onLogout={handleLogout} />
-      <div className="flex-1 overflow-auto p-8 ml-16">
-        {" "}
-        {/* Added ml-16 for sidebar width */}
-        <h1 className="text-3xl font-bold mb-8 text-green-400">
-          Your Food Listings
-        </h1>
-        {posts.length === 0 ? (
-          <p>You haven't posted any food listings yet.</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {posts.map((post) => {
-              const timeLeft = getTimeLeft(post.expiration);
-              return (
-                <div
-                  key={post._id}
-                  className="bg-gray-800 rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]"
-                >
-                  <div className="relative h-48">
-                    {post.imagePaths && post.imagePaths.length > 0 ? (
-                      <Carousel className="w-full h-full">
-                        <CarouselContent>
-                          {post.imagePaths.map((imagePath, index) => (
-                            <CarouselItem key={index}>
-                              <div className="relative h-48 w-full">
-                                <Image
-                                  src={
-                                    imagePath.startsWith("/")
-                                      ? imagePath
-                                      : `/${imagePath}`
-                                  }
-                                  alt={`${post.foodType} - Image ${index + 1}`}
-                                  layout="fill"
-                                  objectFit="cover"
-                                  className="transition-transform duration-300 hover:scale-110"
-                                />
-                              </div>
-                            </CarouselItem>
-                          ))}
-                        </CarouselContent>
-                        {post.imagePaths.length > 1 && (
-                          <>
-                            <CarouselPrevious className="left-2" />
-                            <CarouselNext className="right-2" />
-                          </>
-                        )}
-                      </Carousel>
-                    ) : (
-                      <div className="w-full h-full bg-gray-700 flex items-center justify-center">
-                        <span className="text-gray-500">
-                          No image available
-                        </span>
-                      </div>
-                    )}
-                    <Badge
-                      className={`absolute top-2 right-2 z-10 ${getBadgeStyle(
-                        timeLeft
-                      )} px-2 py-1 text-xs font-semibold rounded-full`}
-                    >
-                      {timeLeft.value === "Expired"
-                        ? "Expired"
-                        : `${timeLeft.value} ${timeLeft.unit} left`}
-                    </Badge>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-xl font-bold text-green-400 mb-2">
-                      {post.foodType}
-                    </h3>
-                    <p className="text-gray-300 mb-4 line-clamp-2">
-                      {post.description}
-                    </p>
-                    <div className="grid grid-cols-2 gap-2 mb-4 text-sm">
-                      <div className="flex items-center text-gray-400">
-                        <CalendarIcon className="h-4 w-4 mr-1" />
-                        <span>{formatDate(post.expiration)}</span>
-                      </div>
-                      <div className="flex items-center text-gray-400">
-                        <MapPinIcon className="h-4 w-4 mr-1" />
-                        <span>{post.location}</span>
-                      </div>
-                      <div className="flex items-center text-gray-400">
-                        <UserIcon className="h-4 w-4 mr-1" />
-                        <span>Posted by you</span>
-                      </div>
-                      <div className="text-gray-200 font-semibold">
-                        {post.quantity} {post.quantityUnit}
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => handleEditClick(post)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        className="flex-1"
-                        onClick={() => handleDeleteClick(post._id)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      setMousePosition({ x, y });
+    };
+
+    const handleListingClick = (e: React.MouseEvent) => {
+      if ((e.target as HTMLElement).closest("button")) {
+        return;
+      }
+      router.push(`/listing/${listing._id}`);
+    };
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileHover={{
+          scale: 1.02,
+          transition: { duration: 0.2 },
+        }}
+        transition={{ duration: 0.3, delay: index * 0.1 }}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={handleListingClick}
+        className="bg-[#F9F3F0] rounded-xl overflow-hidden shadow-md transition-all duration-300 relative cursor-pointer"
+        style={{
+          transformStyle: "preserve-3d",
+          transform: isHovered
+            ? `perspective(1000px) rotateX(${
+                (mousePosition.y - 150) / 15
+              }deg) rotateY(${(mousePosition.x - 400) / 15}deg)`
+            : "none",
+          boxShadow: isHovered
+            ? "0 10px 20px rgba(0, 0, 0, 0.1)"
+            : "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+        }}
+      >
+        {isExpired && (
+          <div className="absolute inset-0 bg-black bg-opacity-50 z-10 flex items-center justify-center rounded-xl">
+            <span className="text-white text-2xl font-bold">EXPIRED</span>
           </div>
         )}
+        <div className="flex flex-col md:flex-row h-auto md:h-48">
+          {/* Image Section */}
+          <div className="relative w-full h-48 md:w-72 md:h-48">
+            {listing.imagePaths && listing.imagePaths.length > 0 ? (
+              <ImageCarousel
+                images={listing.imagePaths}
+                onImageClick={() => {}}
+              />
+            ) : (
+              <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
+                <Package className="w-12 h-12 text-gray-400" />
+              </div>
+            )}
+            <Badge
+              className={`absolute top-3 right-3 z-20 ${
+                isExpired
+                  ? "bg-red-100 text-red-800"
+                  : timeLeft.unit === "hours"
+                  ? "bg-amber-100 text-amber-800"
+                  : "bg-emerald-100 text-emerald-800"
+              } px-3 py-1 rounded-full font-medium`}
+            >
+              <Clock className="w-3 h-3 inline-block mr-1" />
+              {isExpired
+                ? "Expired"
+                : `${timeLeft.value} ${timeLeft.unit} left`}
+            </Badge>
+          </div>
+
+          {/* Content Section */}
+          <div className="flex-1 p-4 md:p-6 flex flex-col justify-between relative">
+            {/* Main Info */}
+            <div>
+              {/* Food Name - Updated font and formatting */}
+              <h3 className="text-2xl font-[500] text-emerald-600 mb-1 font-['Funnel_Sans']">
+                {listing.foodType
+                  .split(" ")
+                  .map(
+                    (word) =>
+                      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                  )
+                  .join(" ")}
+              </h3>
+
+              {/* Posted Date - Updated font and formatting */}
+              <div className="flex items-center">
+                <CalendarDays className="h-5 w-5 mr-3 text-gray-400" />
+                <span className="text-lg font-medium text-[#6B7280] font-['Verdana Pro Cond']">
+                  Posted on{" "}
+                  {new Date(listing.createdAt).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </span>
+              </div>
+            </div>
+
+            {/* Action Buttons - Only visible on hover */}
+            <div
+              className={`absolute right-6 top-1/2 -translate-y-1/2 flex gap-4 transition-opacity duration-200 z-20 ${
+                isHovered ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              <Button
+                variant="outline"
+                className="bg-[#1C716F] text-[#F9F3F0] hover:bg-[#065553] hover:text-[#F9F3F0] border-none font-['Verdana Pro Cond']"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditClick(listing);
+                }}
+              >
+                Edit
+              </Button>
+              <Button
+                className="bg-[#ADA8B3] text-[#F9F3F0] hover:bg-red-500 hover:text-white transition-colors duration-200 font-['Verdana Pro Cond']"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteClick(listing._id);
+                }}
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    );
+  };
+
+  return (
+    <div className="flex flex-col min-h-screen bg-[#ECFDED]">
+      <Navbar user={currentUser} onLogout={handleLogout} />
+      <div className="flex-1 pt-16">
+        <div className="flex-1 overflow-auto p-6 bg-[#ECFDED]">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-7xl mx-auto"
+          >
+            <h1 className="text-3xl font-[500] text-[#065553] font-korolev mb-8 tracking-wide">
+              Your Food Listings
+            </h1>
+
+            {loading ? (
+              <div className="grid grid-cols-1 gap-6">
+                {[...Array(3)].map((_, index) => (
+                  <ListingSkeleton key={index} />
+                ))}
+              </div>
+            ) : posts.length === 0 ? (
+              <div className="text-center text-gray-500 py-12">
+                You haven't posted any food listings yet.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-6">
+                {posts.map((post, index) => (
+                  <FoodListing key={post._id} listing={post} index={index} />
+                ))}
+              </div>
+            )}
+          </motion.div>
+        </div>
       </div>
+
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -308,6 +385,7 @@ const UserActivity: React.FC<UserActivityProps> = () => {
           </DialogContent>
         </Dialog>
       )}
+      <Footer />
     </div>
   );
 };

@@ -10,76 +10,124 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     console.log("Received search params:", Object.fromEntries(searchParams));
 
-    const search = searchParams.get('search');
-    const location = searchParams.get('location');
-    const datePosted = searchParams.get('datePosted');
-    const quantity = searchParams.get('quantity');
-    const expiryDate = searchParams.get('expiryDate');
-    const postedBy = searchParams.get('postedBy');
+    const search = searchParams.get("search");
+    const location = searchParams.get("location");
+    const datePosted = searchParams.get("datePosted");
+    const quantityParam = searchParams.get("quantity");
+    const expiryDate = searchParams.get("expiryDate");
+    const postedBy = searchParams.get("postedBy");
 
     const { db } = await connectToDatabase();
 
     const query: any = {
-      // Always filter out expired listings
-      expiration: { $gt: new Date() }
+      expiration: { $gt: new Date() },
     };
 
-    // Basic search
+    // Basic search (keep existing logic)
     if (search) {
-      console.log("Applying basic search for:", search);
       query.$and = [
         {
           $or: [
-            { foodType: { $regex: search, $options: 'i' } },
-            { description: { $regex: search, $options: 'i' } }
-          ]
-        }
+            { foodType: { $regex: search, $options: "i" } },
+            { description: { $regex: search, $options: "i" } },
+          ],
+        },
       ];
     }
 
-    // Advanced search filters
+    // Enhanced location search with partial matching
     if (location) {
-      console.log("Filtering by location:", location);
-      query.location = { $regex: location, $options: 'i' };
-    }
-
-    if (datePosted) {
-      console.log("Filtering by date posted:", datePosted);
-      const date = new Date(datePosted);
-      query.createdAt = { $gte: date };
-    }
-
-    if (quantity) {
-      console.log("Filtering by quantity:", quantity);
-      const numQuantity = parseFloat(quantity);
-      const lowerBound = (numQuantity * 0.9).toString();
-      const upperBound = (numQuantity * 1.1).toString();
-      query.quantity = { 
-        $gte: lowerBound,
-        $lte: upperBound
+      query.location = {
+        $regex: location
+          .split(" ")
+          .map((word) => `(?=.*${word})`)
+          .join(""),
+        $options: "i",
       };
     }
 
-    if (expiryDate) {
-      console.log("Filtering by expiry date:", expiryDate);
-      const date = new Date(expiryDate);
-      // Ensure the expiry date is after the current date but before or equal to the specified date
-      query.expiration = { $gt: new Date(), $lte: date };
+    // Precise date posted matching with date range (start to end of day)
+    if (datePosted) {
+      const startDate = new Date(datePosted);
+      const endDate = new Date(datePosted);
+      endDate.setHours(23, 59, 59, 999);
+      query.createdAt = {
+        $gte: startDate,
+        $lte: endDate,
+      };
     }
 
+    // Quantity comparison with unit handling
+    if (quantityParam) {
+      try {
+        const { value, unit } = JSON.parse(quantityParam);
+        // Convert all quantities to base units (g or ml) for comparison
+        let baseValue = value;
+        if (unit === "Kg") baseValue *= 1000;
+        if (unit === "L") baseValue *= 1000;
+
+        query.$or = [
+          // Same unit direct comparison
+          {
+            quantity: { $gte: value },
+            quantityUnit: unit,
+          },
+          // Converted unit comparison
+          {
+            $and: [
+              {
+                $or: [
+                  // Handle gram conversions
+                  {
+                    quantity: { $gte: baseValue / 1000 },
+                    quantityUnit: unit === "g" ? "Kg" : "L",
+                  },
+                  // Handle kilogram/liter conversions
+                  {
+                    quantity: { $gte: baseValue * 1000 },
+                    quantityUnit: unit === "Kg" ? "g" : "ml",
+                  },
+                ],
+              },
+              // Match liquid/solid type
+              {
+                quantityUnit: {
+                  $in:
+                    unit === "Kg" || unit === "g" ? ["Kg", "g"] : ["L", "ml"],
+                },
+              },
+            ],
+          },
+        ];
+      } catch (e) {
+        console.error("Error parsing quantity parameter:", e);
+      }
+    }
+
+    // Expiry date comparison (show items expiring on or after the specified date)
+    if (expiryDate) {
+      const searchDate = new Date(expiryDate);
+      query.expiration = {
+        $gte: searchDate,
+        $gt: new Date(), // Keep the existing check for non-expired items
+      };
+    }
+
+    // Keep existing postedBy logic
     if (postedBy) {
-      console.log("Filtering by posted by:", postedBy);
-      const user = await db.collection("users").findOne({ name: { $regex: postedBy, $options: 'i' } });
+      const user = await db
+        .collection("users")
+        .findOne({ name: { $regex: postedBy, $options: "i" } });
       if (user) {
         query.postedBy = user._id.toString();
       } else {
-        console.log("No user found for postedBy:", postedBy);
         return NextResponse.json([]);
       }
     }
 
     console.log("Final query:", JSON.stringify(query, null, 2));
 
+    // Keep existing aggregation pipeline
     const listings = await db
       .collection("foodlistings")
       .aggregate([
@@ -102,6 +150,7 @@ export async function GET(request: Request) {
             postedByUser: 0,
           },
         },
+        { $sort: { createdAt: -1 } },
       ])
       .toArray();
 
@@ -234,7 +283,10 @@ export async function PUT(request: Request) {
           // Convert quantity to a number
           const quantity = parseFloat(value as string);
           if (isNaN(quantity)) {
-            return NextResponse.json({ error: "Invalid quantity" }, { status: 400 });
+            return NextResponse.json(
+              { error: "Invalid quantity" },
+              { status: 400 }
+            );
           }
           updateData[key] = quantity;
         } else {
