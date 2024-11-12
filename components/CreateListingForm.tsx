@@ -23,11 +23,18 @@ import { User } from "@/types";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import Footer from "@/components/Footer";
 import { useAuthGuard } from "@/utils/authGuard";
+import imageCompression from 'browser-image-compression';
 
 interface CreateListingFormProps {
   onListingCreated: () => void;
   onClose: () => void;
 }
+
+const compressionOptions = {
+  maxSizeMB: 1,      // Max file size in MB
+  maxWidthOrHeight: 1920,  // Max width/height in pixels
+  useWebWorker: true
+};
 
 export default function CreateListingForm({
   onListingCreated,
@@ -78,19 +85,34 @@ export default function CreateListingForm({
     }));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newImages = Array.from(e.target.files);
       if (formData.images.length + newImages.length > 5) {
         setError("You can only upload up to 5 images");
         return;
       }
-      setFormData((prev) => ({
-        ...prev,
-        images: [...prev.images, ...newImages],
-      }));
-      const newPreviewUrls = newImages.map((file) => URL.createObjectURL(file));
-      setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
+
+      try {
+        // Compress each image
+        const compressedImages = await Promise.all(
+          newImages.map(async (file) => {
+            const compressedFile = await imageCompression(file, compressionOptions);
+            return compressedFile;
+          })
+        );
+
+        setFormData((prev) => ({
+          ...prev,
+          images: [...prev.images, ...compressedImages],
+        }));
+
+        const newPreviewUrls = compressedImages.map((file) => URL.createObjectURL(file));
+        setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
+      } catch (error) {
+        console.error("Error compressing images:", error);
+        setError("Error processing images. Please try again.");
+      }
     }
   };
 
@@ -391,6 +413,7 @@ export default function CreateListingForm({
                   onChange={handleImageChange}
                   multiple
                   className="bg-[#F9F3F0] border-[#ada8b3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0"
+                  title="Maximum file size: 5MB per image"
                 />
                 <div className="mt-2 flex flex-wrap gap-2">
                   {previewUrls.map((url, index) => (

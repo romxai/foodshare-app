@@ -7,6 +7,11 @@ const nextConfig = {
   images: {
     domains: ["localhost", "your-production-domain.com"],
   },
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
 };
 
 module.exports = nextConfig;
