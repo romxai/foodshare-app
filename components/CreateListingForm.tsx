@@ -24,7 +24,6 @@ import { User } from "@/types";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import Footer from "@/components/Footer";
 import { useAuthGuard } from "@/utils/authGuard";
-import imageCompression from "browser-image-compression";
 import { format } from "date-fns";
 import {
   Popover,
@@ -39,12 +38,6 @@ interface CreateListingFormProps {
   onListingCreated: () => void;
   onClose: () => void;
 }
-
-const compressionOptions = {
-  maxSizeMB: 1, // Max file size in MB
-  maxWidthOrHeight: 1920, // Max width/height in pixels
-  useWebWorker: true,
-};
 
 export default function CreateListingForm({
   onListingCreated,
@@ -95,7 +88,7 @@ export default function CreateListingForm({
     }));
   };
 
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newImages = Array.from(e.target.files);
       if (formData.images.length + newImages.length > 5) {
@@ -103,31 +96,13 @@ export default function CreateListingForm({
         return;
       }
 
-      try {
-        // Compress each image
-        const compressedImages = await Promise.all(
-          newImages.map(async (file) => {
-            const compressedFile = await imageCompression(
-              file,
-              compressionOptions
-            );
-            return compressedFile;
-          })
-        );
+      setFormData((prev) => ({
+        ...prev,
+        images: [...prev.images, ...newImages],
+      }));
 
-        setFormData((prev) => ({
-          ...prev,
-          images: [...prev.images, ...compressedImages],
-        }));
-
-        const newPreviewUrls = compressedImages.map((file) =>
-          URL.createObjectURL(file)
-        );
-        setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
-      } catch (error) {
-        console.error("Error compressing images:", error);
-        setError("Error processing images. Please try again.");
-      }
+      const newPreviewUrls = newImages.map((file) => URL.createObjectURL(file));
+      setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
     }
   };
 
@@ -155,7 +130,6 @@ export default function CreateListingForm({
         throw new Error("No authentication token found");
       }
 
-      // Combine date and time for expiration
       const expiration = new Date(
         `${formData.expirationDate}T${formData.expirationTime}`
       );
@@ -193,7 +167,6 @@ export default function CreateListingForm({
       const data = await response.json();
       console.log("Listing created successfully:", data);
 
-      // After successful creation, redirect to listings page
       router.push("/listings");
     } catch (err) {
       console.error("Error in handleSubmit:", err);
