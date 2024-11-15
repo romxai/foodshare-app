@@ -15,6 +15,7 @@ import {
   ScaleIcon,
   ArrowLeft,
   Package,
+  Clock,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Navbar from "./Navbar";
@@ -23,7 +24,16 @@ import { User } from "@/types";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import Footer from "@/components/Footer";
 import { useAuthGuard } from "@/utils/authGuard";
-import imageCompression from 'browser-image-compression';
+import imageCompression from "browser-image-compression";
+import { format } from "date-fns";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { TimePicker } from "@/components/ui/TimePicker";
 
 interface CreateListingFormProps {
   onListingCreated: () => void;
@@ -31,9 +41,9 @@ interface CreateListingFormProps {
 }
 
 const compressionOptions = {
-  maxSizeMB: 1,      // Max file size in MB
-  maxWidthOrHeight: 1920,  // Max width/height in pixels
-  useWebWorker: true
+  maxSizeMB: 1, // Max file size in MB
+  maxWidthOrHeight: 1920, // Max width/height in pixels
+  useWebWorker: true,
 };
 
 export default function CreateListingForm({
@@ -97,7 +107,10 @@ export default function CreateListingForm({
         // Compress each image
         const compressedImages = await Promise.all(
           newImages.map(async (file) => {
-            const compressedFile = await imageCompression(file, compressionOptions);
+            const compressedFile = await imageCompression(
+              file,
+              compressionOptions
+            );
             return compressedFile;
           })
         );
@@ -107,7 +120,9 @@ export default function CreateListingForm({
           images: [...prev.images, ...compressedImages],
         }));
 
-        const newPreviewUrls = compressedImages.map((file) => URL.createObjectURL(file));
+        const newPreviewUrls = compressedImages.map((file) =>
+          URL.createObjectURL(file)
+        );
         setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
       } catch (error) {
         console.error("Error compressing images:", error);
@@ -126,10 +141,6 @@ export default function CreateListingForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.images.length === 0) {
-      setError("Please upload at least one image");
-      return;
-    }
     setIsSubmitting(true);
     setError(null);
 
@@ -182,8 +193,8 @@ export default function CreateListingForm({
       const data = await response.json();
       console.log("Listing created successfully:", data);
 
-      onListingCreated();
-      onClose();
+      // After successful creation, redirect to listings page
+      router.push("/listings");
     } catch (err) {
       console.error("Error in handleSubmit:", err);
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -279,16 +290,14 @@ export default function CreateListingForm({
                     onValueChange={handleQuantityUnitChange}
                     className="justify-start gap-2"
                   >
-                    {["Kg", "g", "L", "ml"].map((unit) => (
+                    {["Kg", "L"].map((unit) => (
                       <ToggleGroupItem
                         key={unit}
                         value={unit}
-                        className="bg-[#ADA8B3] text-white hover:bg-[#1C716F] hover:text-white data-[state=on]:bg-[#065553] data-[state=on]:text-white border-0 outline-none"
+                        className="bg-[#ADA8B3] text-white text-sm hover:bg-[#1C716F] hover:text-white data-[state=on]:bg-[#065553] data-[state=on]:text-white border-0 outline-none px-3 py-2"
                       >
-                        {unit === "Kg" && "Kilogram (KG)"}
-                        {unit === "g" && "Gram (G)"}
-                        {unit === "L" && "Litre (L)"}
-                        {unit === "ml" && "Millilitre (ML)"}
+                        {unit === "Kg" && "KG"}
+                        {unit === "L" && "L"}
                       </ToggleGroupItem>
                     ))}
                   </ToggleGroup>
@@ -345,19 +354,50 @@ export default function CreateListingForm({
                   >
                     Expiration Date
                   </Label>
-                  <div className="flex items-center space-x-2">
-                    <CalendarIcon className="text-gray-400" />
-                    <Input
-                      id="expirationDate"
-                      name="expirationDate"
-                      type="date"
-                      value={formData.expirationDate}
-                      onChange={handleChange}
-                      required
-                      className="bg-[#F9F3F0] border-[#ada8b3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0"
-                    />
-                  </div>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full pl-10 bg-[#F9F3F0] border-[#ada8b3] border-2 text-left font-['Verdana Pro Cond'] hover:bg-[#F9F3F0] hover:border-[#065553]",
+                          formData.expirationDate
+                            ? "text-gray-800"
+                            : "text-gray-400 italic"
+                        )}
+                      >
+                        <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                        {formData.expirationDate
+                          ? format(new Date(formData.expirationDate), "PPP")
+                          : "Select expiry date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={
+                          formData.expirationDate
+                            ? new Date(formData.expirationDate)
+                            : undefined
+                        }
+                        onSelect={(date) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            expirationDate: date
+                              ? format(date, "yyyy-MM-dd")
+                              : "",
+                          }))
+                        }
+                        initialFocus
+                        classNames={{
+                          day_selected:
+                            "bg-[#065553] text-white hover:bg-[#065553]",
+                          day_today: "bg-gray-400 text-white",
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
+
                 <div className="flex-1 space-y-2">
                   <Label
                     htmlFor="expirationTime"
@@ -365,14 +405,14 @@ export default function CreateListingForm({
                   >
                     Expiration Time
                   </Label>
-                  <Input
-                    id="expirationTime"
-                    name="expirationTime"
-                    type="time"
+                  <TimePicker
                     value={formData.expirationTime}
-                    onChange={handleChange}
-                    required
-                    className="bg-[#F9F3F0] border-[#ada8b3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0"
+                    onChange={(time) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        expirationTime: time,
+                      }))
+                    }
                   />
                 </div>
               </div>

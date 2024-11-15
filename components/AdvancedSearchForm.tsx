@@ -42,23 +42,50 @@ const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch({
-      location,
-      datePosted: datePosted ? format(datePosted, "yyyy-MM-dd") : undefined,
-      quantity:
-        quantity && quantityUnit
-          ? { value: parseFloat(quantity), unit: quantityUnit }
-          : undefined,
-      expiryDate: expiryDate ? format(expiryDate, "yyyy-MM-dd") : undefined,
-    });
+
+    // Create search params object, only including filled fields
+    const searchParams: any = {};
+
+    if (location.trim()) {
+      searchParams.location = location.trim();
+    }
+
+    if (datePosted) {
+      searchParams.datePosted = format(datePosted, "yyyy-MM-dd");
+    }
+
+    if (quantity && quantityUnit) {
+      searchParams.quantity = {
+        value: parseFloat(quantity),
+        unit: quantityUnit,
+      };
+    }
+
+    if (expiryDate) {
+      // Set the time to the start of the day for consistent comparison
+      const selectedDate = new Date(expiryDate);
+      selectedDate.setHours(0, 0, 0, 0);
+
+      // Send as ISO string to maintain timezone consistency
+      searchParams.expiryDate = {
+        date: selectedDate.toISOString(),
+        type: "after", // Indicate we want items expiring on or after this date
+      };
+    }
+
+    // Only call onSearch when Apply Filters is clicked
+    onSearch(searchParams);
   };
 
   const handleClear = () => {
+    // Clear all form fields
     setLocation("");
     setDatePosted(undefined);
     setQuantity("");
-    setQuantityUnit("");
+    setQuantityUnit("Kg"); // Reset to default
     setExpiryDate(undefined);
+
+    // Clear all filters by passing empty object
     onSearch({});
   };
 
@@ -122,16 +149,14 @@ const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
                 onValueChange={handleQuantityUnitChange}
                 className="justify-start gap-2"
               >
-                {["Kg", "g", "L", "ml"].map((unit) => (
+                {["Kg", "L"].map((unit) => (
                   <ToggleGroupItem
                     key={unit}
                     value={unit}
                     className="bg-[#ADA8B3] text-white text-sm hover:bg-[#1C716F] hover:text-white data-[state=on]:bg-[#065553] data-[state=on]:text-white border-0 outline-none px-3 py-2"
                   >
                     {unit === "Kg" && "KG"}
-                    {unit === "g" && "G"}
                     {unit === "L" && "L"}
-                    {unit === "ml" && "ML"}
                   </ToggleGroupItem>
                 ))}
               </ToggleGroup>

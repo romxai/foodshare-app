@@ -35,7 +35,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
         <div className="flex justify-between items-center h-full">
           {/* Logo/Site Name */}
           <div
-            className="text-2xl font-bold text-emerald-600 cursor-pointer"
+            className="text-2xl font-bold text-[#1C716F] cursor-pointer font-korolev tracking-wide"
             onClick={() => router.push("/")}
           >
             FoodShare
@@ -56,12 +56,10 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
             {/* About Us Button */}
             <Button
               variant="ghost"
-              className="text-gray-600 hover:text-emerald-600 transition-colors"
+              className="text-[#1C716F] hover:text-[#065553] transition-colors font-['Verdana Pro Cond']"
               onClick={() => {
                 if (window.location.pathname === "/") {
-                  document
-                    .getElementById("about")
-                    ?.scrollIntoView({ behavior: "smooth" });
+                  document.getElementById("about")?.scrollIntoView({ behavior: "smooth" });
                 } else {
                   router.push("/#about");
                 }
@@ -70,33 +68,44 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
               About Us
             </Button>
 
-            {/* User Menu - Added underline and italics */}
+            {/* User Menu */}
             {user && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="flex items-center space-x-2 text-gray-600 hover:text-emerald-600"
+                    className="flex items-center space-x-2 text-[#1C716F] hover:text-[#065553] font-['Verdana Pro Cond']"
                   >
                     <span className="underline italic">{user.name}</span>
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
+                <DropdownMenuContent className="w-56 bg-[#F9F3F0] border-[#ADA8B3] border-2" align="end">
+                  <DropdownMenuLabel className="font-korolev text-[#1C716F] tracking-wide">
+                    My Account
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-[#ADA8B3]" />
                   <DropdownMenuGroup>
-                    <DropdownMenuItem onClick={() => router.push("/settings")}>
+                    <DropdownMenuItem 
+                      onClick={() => router.push("/settings")}
+                      className="font-['Verdana Pro Cond'] text-gray-600 hover:text-[#065553] hover:bg-[#CCD9BF] cursor-pointer"
+                    >
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Settings</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push("/account")}>
+                    <DropdownMenuItem 
+                      onClick={() => router.push("/account")}
+                      className="font-['Verdana Pro Cond'] text-gray-600 hover:text-[#065553] hover:bg-[#CCD9BF] cursor-pointer"
+                    >
                       <Activity className="mr-2 h-4 w-4" />
-                      <span>Activity</span>
+                      <span>Listings</span>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={onLogout}>
+                  <DropdownMenuSeparator className="bg-[#ADA8B3]" />
+                  <DropdownMenuItem 
+                    onClick={onLogout}
+                    className="font-['Verdana Pro Cond'] text-gray-600 hover:text-[#065553] hover:bg-[#CCD9BF] cursor-pointer"
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
                   </DropdownMenuItem>

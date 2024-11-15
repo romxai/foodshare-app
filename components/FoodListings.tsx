@@ -174,12 +174,63 @@ const FoodListings: React.FC = () => {
     [search, fetchListings]
   );
 
-  const handleAdvancedSearch = useCallback(
-    (params: any) => {
-      fetchListings(search, params);
-    },
-    [search, fetchListings]
-  );
+  const handleAdvancedSearch = async (params: any) => {
+    try {
+      setIsLoading(true);
+      let queryString = "";
+
+      // Build query string based on provided params
+      if (params.location) {
+        queryString += `location=${encodeURIComponent(params.location)}&`;
+      }
+
+      if (params.datePosted) {
+        queryString += `datePosted=${encodeURIComponent(params.datePosted)}&`;
+      }
+
+      // Update quantity search params
+      if (params.quantity) {
+        queryString += `minQuantity=${encodeURIComponent(
+          params.quantity.value
+        )}&`;
+        queryString += `quantityUnit=${encodeURIComponent(
+          params.quantity.unit
+        )}&`;
+      }
+
+      if (params.expiryDate) {
+        queryString += `expiryDate=${encodeURIComponent(
+          params.expiryDate.date
+        )}&`;
+        queryString += `expiryType=${encodeURIComponent(
+          params.expiryDate.type
+        )}`;
+      }
+
+      // Remove trailing &
+      queryString = queryString.replace(/&$/, "");
+
+      const response = await fetch(
+        `/api/listings${queryString ? `?${queryString}` : ""}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch listings");
+      }
+
+      const data = await response.json();
+      setListings(data);
+    } catch (error) {
+      console.error("Error fetching listings:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getTimeLeft = useCallback((expirationDate: string) => {
     const now = new Date();

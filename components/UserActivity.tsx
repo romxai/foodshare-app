@@ -21,13 +21,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import EditListingForm from "./EditListingForm";
 import Footer from "@/components/Footer";
 import { ListingSkeleton } from "@/components/ui/ListingSkeleton";
 import { useAuthCheck } from "@/utils/authCheck";
@@ -42,9 +35,6 @@ const UserActivity: React.FC = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
   const router = useRouter();
-  const [editingListing, setEditingListing] = useState<FoodListing | null>(
-    null
-  );
 
   useEffect(() => {
     fetchActivity();
@@ -157,15 +147,6 @@ const UserActivity: React.FC = () => {
     } else {
       return "bg-gray-200 text-gray-800";
     }
-  };
-
-  const handleEditClick = (listing: FoodListing) => {
-    setEditingListing(listing);
-  };
-
-  const handleListingUpdated = () => {
-    fetchActivity();
-    setEditingListing(null);
   };
 
   const FoodListing = ({
@@ -295,7 +276,7 @@ const UserActivity: React.FC = () => {
                 className="bg-[#1C716F] text-[#F9F3F0] hover:bg-[#065553] hover:text-[#F9F3F0] border-none font-['Verdana Pro Cond']"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleEditClick(listing);
+                  router.push(`/edit-listing/${listing._id}`);
                 }}
               >
                 Edit
@@ -368,23 +349,6 @@ const UserActivity: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      {editingListing && (
-        <Dialog
-          open={!!editingListing}
-          onOpenChange={() => setEditingListing(null)}
-        >
-          <DialogContent className="bg-gray-800 text-gray-100">
-            <DialogHeader>
-              <DialogTitle>Edit Food Listing</DialogTitle>
-            </DialogHeader>
-            <EditListingForm
-              listing={editingListing}
-              onListingUpdated={handleListingUpdated}
-              onClose={() => setEditingListing(null)}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
       <Footer />
     </div>
   );

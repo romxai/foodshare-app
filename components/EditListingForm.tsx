@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,39 +13,82 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
 import { useRouter } from "next/navigation";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { format } from "date-fns";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { TimePicker } from "@/components/ui/TimePicker";
+import { ArrowLeft } from "lucide-react";
 
 interface EditListingFormProps {
-  listing: FoodListing;
+  listingId: string;
   onListingUpdated: () => void;
   onClose: () => void;
 }
 
-export default function EditListingForm({
-  listing,
+const EditListingForm: React.FC<EditListingFormProps> = ({
+  listingId,
   onListingUpdated,
   onClose,
-}: EditListingFormProps) {
+}) => {
+  const [listing, setListing] = useState<FoodListing | null>(null);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
-    foodType: listing.foodType,
-    description: listing.description,
-    quantity: listing.quantity,
-    quantityType: listing.quantityType,
-    quantityUnit: listing.quantityUnit,
-    expirationDate: new Date(listing.expiration).toISOString().split("T")[0],
-    expirationTime: new Date(listing.expiration)
-      .toTimeString()
-      .split(" ")[0]
-      .slice(0, 5),
-    location: listing.location,
+    foodType: "",
+    description: "",
+    quantity: "",
+    quantityType: "solid",
+    quantityUnit: "Kg",
+    expirationDate: "",
+    expirationTime: "",
+    location: "",
     images: [] as File[],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [previewUrls, setPreviewUrls] = useState<string[]>(
-    listing.imagePaths || []
-  );
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
 
   const router = useRouter();
+
+  useEffect(() => {
+    const fetchListing = async () => {
+      try {
+        const response = await fetch(`/api/listings/${listingId}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setListing(data);
+          setExistingImages(data.imagePaths || []);
+          setFormData({
+            foodType: data.foodType,
+            description: data.description,
+            quantity: data.quantity,
+            quantityType: data.quantityType,
+            quantityUnit: data.quantityUnit,
+            expirationDate: format(new Date(data.expiration), "yyyy-MM-dd"),
+            expirationTime: format(new Date(data.expiration), "HH:mm"),
+            location: data.location,
+            images: [],
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching listing:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchListing();
+  }, [listingId]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -78,14 +121,19 @@ export default function EditListingForm({
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newImages = Array.from(e.target.files);
-      if (formData.images.length + newImages.length > 5) {
-        setError("You can only upload up to 5 images");
+      const totalImages =
+        existingImages.length + formData.images.length + newImages.length;
+
+      if (totalImages > 5) {
+        setError("You can only upload up to 5 images in total");
         return;
       }
+
       setFormData((prev) => ({
         ...prev,
         images: [...prev.images, ...newImages],
       }));
+
       const newPreviewUrls = newImages.map((file) => URL.createObjectURL(file));
       setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
     }
@@ -97,6 +145,26 @@ export default function EditListingForm({
       images: prev.images.filter((_, i) => i !== index),
     }));
     setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const removeExistingImage = async (imageUrl: string) => {
+    try {
+      const response = await fetch(`/api/listings/${listingId}/images`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ imageUrl }),
+      });
+
+      if (response.ok) {
+        setExistingImages((prev) => prev.filter((img) => img !== imageUrl));
+      }
+    } catch (error) {
+      console.error("Error removing image:", error);
+      setError("Failed to remove image");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -115,7 +183,7 @@ export default function EditListingForm({
       );
 
       const formDataToSend = new FormData();
-      formDataToSend.append("id", listing._id);
+      formDataToSend.append("id", listingId);
       Object.entries(formData).forEach(([key, value]) => {
         if (key !== "images") {
           formDataToSend.append(key, value as string);
@@ -151,21 +219,29 @@ export default function EditListingForm({
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#ECFDED]">
+    <div className="flex flex-col min-h-screen bg-[#CCD9BF]">
       <Navbar user={null} onLogout={() => router.push("/login")} />
-      <Card className="w-full max-w-2xl bg-gray-800 text-gray-100">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-green-400">
-            Edit Listing
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-[70vh] pr-4">
+      <div className="flex-1 pt-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Button
+            variant="ghost"
+            className="mb-6 text-gray-600 hover:text-emerald-600"
+            onClick={() => router.back()}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+
+          <div className="bg-[#F9F3F0] rounded-xl p-8 shadow-lg">
+            <h1 className="text-3xl font-[500] text-[#065553] font-korolev mb-8 tracking-wide">
+              Edit Food Listing
+            </h1>
+
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label
                   htmlFor="foodType"
-                  className="text-sm font-medium text-gray-200"
+                  className="text-sm font-medium text-gray-600"
                 >
                   Food Type
                 </Label>
@@ -175,14 +251,14 @@ export default function EditListingForm({
                   value={formData.foodType}
                   onChange={handleChange}
                   required
-                  className="bg-gray-700 border-gray-600 text-gray-100 focus:border-green-400"
+                  className="bg-[#F9F3F0] border-[#ada8b3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label
                   htmlFor="description"
-                  className="text-sm font-medium text-gray-200"
+                  className="text-sm font-medium text-gray-600"
                 >
                   Description
                 </Label>
@@ -192,7 +268,7 @@ export default function EditListingForm({
                   value={formData.description}
                   onChange={handleChange}
                   required
-                  className="bg-gray-700 border-gray-600 text-gray-100 focus:border-green-400 min-h-[100px]"
+                  className="bg-[#F9F3F0] border-[#ada8b3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0 min-h-[100px]"
                 />
               </div>
 
@@ -200,12 +276,11 @@ export default function EditListingForm({
                 <div className="flex-1 space-y-2">
                   <Label
                     htmlFor="quantity"
-                    className="text-sm font-medium text-gray-200"
+                    className="text-sm font-medium text-gray-600"
                   >
                     Quantity
                   </Label>
                   <div className="flex items-center space-x-2">
-                    <ScaleIcon className="text-gray-400" />
                     <Input
                       id="quantity"
                       name="quantity"
@@ -215,40 +290,36 @@ export default function EditListingForm({
                       value={formData.quantity}
                       onChange={handleChange}
                       required
-                      className="bg-gray-700 border-gray-600 text-gray-100 focus:border-green-400"
+                      className="bg-[#F9F3F0] border-[#ada8b3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0"
                     />
                   </div>
                 </div>
                 <div className="flex-1 space-y-2">
-                  <Label className="text-sm font-medium text-gray-200">
-                    Type & Unit
+                  <Label className="text-[#1C716F] font-['Verdana Pro Cond']">
+                    Unit
                   </Label>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="quantityType"
-                        checked={formData.quantityType === "liquid"}
-                        onCheckedChange={handleQuantityTypeChange}
-                      />
-                      <Label htmlFor="quantityType" className="text-sm">
-                        {formData.quantityType === "solid" ? "Solid" : "Liquid"}
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="quantityUnit"
-                        checked={
-                          formData.quantityType === "solid"
-                            ? formData.quantityUnit === "g"
-                            : formData.quantityUnit === "ml"
-                        }
-                        onCheckedChange={handleQuantityUnitChange}
-                      />
-                      <Label htmlFor="quantityUnit" className="text-sm">
-                        {formData.quantityUnit}
-                      </Label>
-                    </div>
-                  </div>
+                  <ToggleGroup
+                    type="single"
+                    value={formData.quantityUnit}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        quantityUnit: value,
+                      }))
+                    }
+                    className="justify-start gap-2"
+                  >
+                    {["Kg", "L"].map((unit) => (
+                      <ToggleGroupItem
+                        key={unit}
+                        value={unit}
+                        className="bg-[#ADA8B3] text-white text-sm hover:bg-[#1C716F] hover:text-white data-[state=on]:bg-[#065553] data-[state=on]:text-white border-0 outline-none px-3 py-2"
+                      >
+                        {unit === "Kg" && "KG"}
+                        {unit === "L" && "L"}
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
                 </div>
               </div>
 
@@ -256,38 +327,69 @@ export default function EditListingForm({
                 <div className="flex-1 space-y-2">
                   <Label
                     htmlFor="expirationDate"
-                    className="text-sm font-medium text-gray-200"
+                    className="text-sm font-medium text-gray-600"
                   >
                     Expiration Date
                   </Label>
-                  <div className="flex items-center space-x-2">
-                    <CalendarIcon className="text-gray-400" />
-                    <Input
-                      id="expirationDate"
-                      name="expirationDate"
-                      type="date"
-                      value={formData.expirationDate}
-                      onChange={handleChange}
-                      required
-                      className="bg-gray-700 border-gray-600 text-gray-100 focus:border-green-400"
-                    />
-                  </div>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full bg-[#F9F3F0] border-[#ada8b3] border-2 text-left font-['Verdana Pro Cond'] hover:bg-[#F9F3F0] hover:border-[#065553]",
+                          formData.expirationDate
+                            ? "text-gray-800"
+                            : "text-gray-400 italic"
+                        )}
+                      >
+                        {formData.expirationDate
+                          ? format(new Date(formData.expirationDate), "PPP")
+                          : "Select expiry date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={
+                          formData.expirationDate
+                            ? new Date(formData.expirationDate)
+                            : undefined
+                        }
+                        onSelect={(date) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            expirationDate: date
+                              ? format(date, "yyyy-MM-dd")
+                              : "",
+                          }))
+                        }
+                        initialFocus
+                        classNames={{
+                          day_selected:
+                            "bg-[#065553] text-white hover:bg-[#065553]",
+                          day_today: "bg-gray-400 text-white",
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
+
                 <div className="flex-1 space-y-2">
                   <Label
                     htmlFor="expirationTime"
-                    className="text-sm font-medium text-gray-200"
+                    className="text-sm font-medium text-gray-600"
                   >
                     Expiration Time
                   </Label>
-                  <Input
-                    id="expirationTime"
-                    name="expirationTime"
-                    type="time"
+                  <TimePicker
                     value={formData.expirationTime}
-                    onChange={handleChange}
-                    required
-                    className="bg-gray-700 border-gray-600 text-gray-100 focus:border-green-400"
+                    onChange={(time) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        expirationTime: time,
+                      }))
+                    }
+                    showIcon={false}
                   />
                 </div>
               </div>
@@ -295,7 +397,7 @@ export default function EditListingForm({
               <div className="space-y-2">
                 <Label
                   htmlFor="location"
-                  className="text-sm font-medium text-gray-200"
+                  className="text-sm font-medium text-gray-600"
                 >
                   Location
                 </Label>
@@ -307,7 +409,7 @@ export default function EditListingForm({
                     value={formData.location}
                     onChange={handleChange}
                     required
-                    className="bg-gray-700 border-gray-600 text-gray-100 focus:border-green-400"
+                    className="bg-[#F9F3F0] border-[#ada8b3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0"
                   />
                 </div>
               </div>
@@ -317,7 +419,7 @@ export default function EditListingForm({
               <div className="space-y-2">
                 <Label
                   htmlFor="images"
-                  className="text-sm font-medium text-gray-200"
+                  className="text-sm font-medium text-gray-600"
                 >
                   Images (1-5)
                 </Label>
@@ -327,11 +429,31 @@ export default function EditListingForm({
                   accept="image/*"
                   onChange={handleImageChange}
                   multiple
-                  className="bg-gray-700 border-gray-600 text-gray-100 focus:border-green-400"
+                  disabled={existingImages.length + formData.images.length >= 5}
+                  className="bg-[#F9F3F0] border-[#ada8b3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0"
                 />
                 <div className="mt-2 flex flex-wrap gap-2">
+                  {existingImages.map((url, index) => (
+                    <div key={`existing-${index}`} className="relative">
+                      <Image
+                        src={url}
+                        alt={`Existing ${index + 1}`}
+                        width={100}
+                        height={100}
+                        className="rounded-md object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeExistingImage(url)}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+
                   {previewUrls.map((url, index) => (
-                    <div key={index} className="relative">
+                    <div key={`new-${index}`} className="relative">
                       <Image
                         src={url}
                         alt={`Preview ${index + 1}`}
@@ -349,21 +471,27 @@ export default function EditListingForm({
                     </div>
                   ))}
                 </div>
+                <p className="text-sm text-gray-500">
+                  {5 - (existingImages.length + formData.images.length)} image
+                  slots remaining
+                </p>
               </div>
 
               {error && <p className="text-red-500 text-sm">{error}</p>}
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded transition-colors"
+                className="w-full bg-[#1C716F] hover:bg-[#065553] text-[#F9F3F0] font-['Verdana Pro Cond']"
               >
                 {isSubmitting ? "Updating..." : "Update Listing"}
               </Button>
             </form>
-          </ScrollArea>
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+      </div>
       <Footer />
     </div>
   );
-}
+};
+
+export default EditListingForm;

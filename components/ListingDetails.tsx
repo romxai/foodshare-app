@@ -117,6 +117,11 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
 
   const { date, time } = formatDateTime(listing.expiration);
 
+  // Add check for listing owner
+  const isOwner =
+    currentUser?.id === listing.postedBy ||
+    currentUser?._id === listing.postedBy;
+
   return (
     <div className="flex flex-col min-h-screen bg-[#ECFDED]">
       <Navbar user={currentUser} onLogout={() => router.push("/login")} />
@@ -201,11 +206,16 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
                       <span>
                         <span className="text-[#1C716F]">Quantity:</span>{" "}
                         <span className="italic">{`${listing.quantity} ${listing.quantityUnit}`}</span>
-                        {(listing as FoodListing & { servings?: number }).servings && (
+                        {(listing as FoodListing & { servings?: number })
+                          .servings && (
                           <span className="ml-2">
                             • <span className="text-[#1C716F]">Servings:</span>{" "}
                             <span className="italic">
-                              {(listing as FoodListing & { servings?: number }).servings} approx.
+                              {
+                                (listing as FoodListing & { servings?: number })
+                                  .servings
+                              }{" "}
+                              approx.
                             </span>
                           </span>
                         )}
@@ -239,14 +249,16 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
                     )}
                   </div>
 
-                  <div className="flex flex-col lg:flex-row gap-4">
+                  <div className="flex gap-4">
                     <Button
-                      className="w-full bg-[#1C716F] hover:bg-[#065553] text-white"
+                      className="flex-1 bg-[#1C716F] hover:bg-[#065553] text-[#F9F3F0]"
                       onClick={() => {
                         if (seller?.email) {
                           window.location.href = `mailto:${seller.email}`;
                         }
                       }}
+                      disabled={isOwner}
+                      title={isOwner ? "This is your listing" : ""}
                     >
                       <Mail className="mr-2 h-4 w-4" />
                       <span className="font-['Verdana Pro Cond']">
@@ -255,22 +267,31 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
                     </Button>
 
                     <Button
-                      className="w-full bg-[#1C716F] hover:bg-[#065553] text-white"
+                      className="flex-1 bg-[#1C716F] hover:bg-[#065553] text-[#F9F3F0]"
                       onClick={() => {
                         if (seller?.phoneNumber && listing && seller?.name) {
-                          const formattedDate = new Date(listing.createdAt).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
+                          const formattedDate = new Date(
+                            listing.createdAt
+                          ).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
                           });
 
                           const message = `Hello *${seller.name}*,\n\nI am contacting you from FoodShare, i would love to enquire more about your listing on *${listing.foodType}*, posted on _${formattedDate}_.\n\nThank you,\n_${currentUser?.name}._`;
 
-                          const cleanPhone = seller.phoneNumber.replace(/\D/g, '');
-                          const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
-                          window.open(whatsappUrl, '_blank');
+                          const cleanPhone = seller.phoneNumber.replace(
+                            /\D/g,
+                            ""
+                          );
+                          const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
+                            message
+                          )}`;
+                          window.open(whatsappUrl, "_blank");
                         }
                       }}
+                      disabled={isOwner}
+                      title={isOwner ? "This is your listing" : ""}
                     >
                       <MessageCircle className="mr-2 h-4 w-4" />
                       <span className="font-['Verdana Pro Cond']">
