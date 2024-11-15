@@ -63,9 +63,12 @@ export async function PUT(
     // Get existing images that weren't removed
     const existingImages = JSON.parse(formData.get("existingImages") as string);
 
-    // Handle new image uploads if any
-    const newImageUrls = [];
-    for (let [key, value] of formData.entries()) {
+    // Add type for newImageUrls
+    const newImageUrls: string[] = [];
+
+    // Fix the FormData.entries() iteration
+    const entries = Array.from(formData.entries());
+    for (const [key, value] of entries) {
       if (key.startsWith("image") && key !== "existingImages") {
         // Add your image upload logic here
         // const imageUrl = await uploadImage(value as File);
@@ -73,7 +76,7 @@ export async function PUT(
       }
     }
 
-    // Combine existing and new image URLs
+    // Now combine the URLs
     const allImageUrls = [...existingImages, ...newImageUrls];
 
     // Update the listing
