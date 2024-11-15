@@ -183,19 +183,24 @@ const EditListingForm: React.FC<EditListingFormProps> = ({
       );
 
       const formDataToSend = new FormData();
-      formDataToSend.append("id", listingId);
-      Object.entries(formData).forEach(([key, value]) => {
-        if (key !== "images") {
-          formDataToSend.append(key, value as string);
-        }
-      });
+      
+      // Add basic fields
+      formDataToSend.append("foodType", formData.foodType);
+      formDataToSend.append("description", formData.description);
+      formDataToSend.append("quantity", formData.quantity.toString());
+      formDataToSend.append("quantityUnit", formData.quantityUnit);
+      formDataToSend.append("location", formData.location);
       formDataToSend.append("expiration", expiration.toISOString());
 
+      // Add existing images as a JSON string
+      formDataToSend.append("existingImages", JSON.stringify(existingImages));
+
+      // Add new images
       formData.images.forEach((image, index) => {
         formDataToSend.append(`image${index}`, image);
       });
 
-      const response = await fetch(`/api/listings`, {
+      const response = await fetch(`/api/listings/${listingId}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -208,8 +213,10 @@ const EditListingForm: React.FC<EditListingFormProps> = ({
         throw new Error(errorData.error || "Failed to update listing");
       }
 
-      onListingUpdated();
-      onClose();
+      const data = await response.json();
+      console.log("Listing updated successfully:", data);
+
+      router.push('/listings');
     } catch (err) {
       console.error("Error in handleSubmit:", err);
       setError(err instanceof Error ? err.message : "An error occurred");
