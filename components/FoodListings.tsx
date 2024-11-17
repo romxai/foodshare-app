@@ -101,6 +101,9 @@ const FoodListings: React.FC = () => {
 
   const router = useRouter();
 
+  // Add state for unique locations
+  const [uniqueLocations, setUniqueLocations] = useState<string[]>([]);
+
   useEffect(() => {
     const fetchUser = async () => {
       const user = await getCurrentUser();
@@ -136,6 +139,12 @@ const FoodListings: React.FC = () => {
         const data = await response.json();
         console.log("Fetched listings:", data);
         setListings(data);
+
+        // Extract and set unique locations from the fetched listings
+        const locations = Array.from(
+          new Set(data.map((listing: FoodListing) => listing.location))
+        ).sort() as string[];
+        setUniqueLocations(locations);
 
         // Fetch users for all unique postedBy IDs
         const userIds = Array.from(
@@ -424,60 +433,12 @@ const FoodListings: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             className="max-w-7xl mx-auto"
           >
-            <form onSubmit={handleSearch} className="mb-8">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 relative">
-                  <Input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search food listings..."
-                    className="w-full pl-10 bg-[#F9F3F0] border-[#ada8b3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0 placeholder:text-gray-400 placeholder:italic font-['Funnel_Sans']"
-                  />
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                </div>
-                <div className="flex flex-row gap-4 w-full md:w-auto">
-                  <motion.div
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-1/4 md:w-auto"
-                  >
-                    <Button
-                      type="submit"
-                      className="bg-emerald-600 text-white hover:bg-emerald-700 w-full md:w-auto"
-                    >
-                      Search
-                    </Button>
-                  </motion.div>
-                  <motion.div
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-3/4 md:w-auto"
-                  >
-                    <Button
-                      type="button"
-                      onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
-                      className="bg-emerald-600 text-white hover:bg-emerald-700 w-full md:w-auto"
-                    >
-                      {showAdvancedSearch
-                        ? "Hide Advanced Search"
-                        : "Advanced Search"}
-                    </Button>
-                  </motion.div>
-                </div>
-              </div>
-            </form>
-
-            {showAdvancedSearch && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mb-8 bg-[#F9F3F0] rounded-xl shadow-sm border border-gray-100"
-              >
-                <AdvancedSearchForm onSearch={handleAdvancedSearch} />
-              </motion.div>
-            )}
+            <div className="mb-8 bg-[#F9F3F0] rounded-xl shadow-sm border border-gray-100">
+              <AdvancedSearchForm
+                onSearch={handleAdvancedSearch}
+                locations={uniqueLocations}
+              />
+            </div>
 
             {isLoading && (
               <div className="grid grid-cols-1 gap-6">

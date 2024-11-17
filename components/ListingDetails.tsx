@@ -20,6 +20,7 @@ import { motion } from "framer-motion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ListingDetailsSkeleton } from "@/components/ui/ListingDetailsSkeleton";
 import { useAuthGuard } from "@/utils/authGuard";
+import Footer from "@/components/Footer";
 
 interface ListingDetailsProps {
   id: string;
@@ -123,7 +124,7 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
     currentUser?._id === listing.postedBy;
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#ECFDED]">
+    <div className="flex flex-col min-h-screen bg-[#CCD9BF]">
       <Navbar user={currentUser} onLogout={() => router.push("/login")} />
       <div className="flex-1 pt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -249,9 +250,9 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
                     )}
                   </div>
 
-                  <div className="flex gap-4">
+                  <div className="flex flex-col md:flex-row gap-4">
                     <Button
-                      className="flex-1 bg-[#1C716F] hover:bg-[#065553] text-[#F9F3F0]"
+                      className="bg-[#1C716F] hover:bg-[#065553] text-[#F9F3F0]"
                       onClick={() => {
                         if (seller?.email) {
                           window.location.href = `mailto:${seller.email}`;
@@ -267,7 +268,7 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
                     </Button>
 
                     <Button
-                      className="flex-1 bg-[#1C716F] hover:bg-[#065553] text-[#F9F3F0]"
+                      className="bg-[#1C716F] hover:bg-[#065553] text-[#F9F3F0]"
                       onClick={() => {
                         if (seller?.phoneNumber && listing && seller?.name) {
                           const formattedDate = new Date(
@@ -305,6 +306,7 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

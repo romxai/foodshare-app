@@ -21,9 +21,9 @@ export async function GET(
     }
 
     const { db } = await connectToDatabase();
-    
+
     const listing = await db.collection("foodlistings").findOne({
-      _id: new ObjectId(params.id)
+      _id: new ObjectId(params.id),
     });
 
     if (!listing) {
@@ -91,20 +91,18 @@ export async function PUT(
       updatedAt: new Date(),
     };
 
-    const result = await db.collection("foodlistings").updateOne(
-      { _id: new ObjectId(params.id) },
-      { $set: updateData }
-    );
+    const result = await db
+      .collection("foodlistings")
+      .updateOne({ _id: new ObjectId(params.id) }, { $set: updateData });
 
     if (result.matchedCount === 0) {
       return NextResponse.json({ error: "Listing not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: "Listing updated successfully",
-      listing: updateData 
+      listing: updateData,
     });
-
   } catch (error) {
     console.error("Update listing error:", error);
     return NextResponse.json(
@@ -112,4 +110,4 @@ export async function PUT(
       { status: 500 }
     );
   }
-} 
+}

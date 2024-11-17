@@ -240,7 +240,7 @@ const UserActivity: React.FC = () => {
           <div className="flex-1 p-4 md:p-6 flex flex-col justify-between relative">
             {/* Main Info */}
             <div>
-              {/* Food Name - Updated font and formatting */}
+              {/* Food Name */}
               <h3 className="text-2xl font-[500] text-emerald-600 mb-1 font-['Funnel_Sans']">
                 {listing.foodType
                   .split(" ")
@@ -251,8 +251,8 @@ const UserActivity: React.FC = () => {
                   .join(" ")}
               </h3>
 
-              {/* Posted Date - Updated font and formatting */}
-              <div className="flex items-center">
+              {/* Posted Date */}
+              <div className="flex items-center mb-4">
                 <CalendarDays className="h-5 w-5 mr-3 text-gray-400" />
                 <span className="text-lg font-medium text-[#6B7280] font-['Verdana Pro Cond']">
                   Posted on{" "}
@@ -263,33 +263,58 @@ const UserActivity: React.FC = () => {
                   })}
                 </span>
               </div>
-            </div>
 
-            {/* Action Buttons - Only visible on hover */}
-            <div
-              className={`absolute right-6 top-1/2 -translate-y-1/2 flex gap-4 transition-opacity duration-200 z-20 ${
-                isHovered ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              <Button
-                variant="outline"
-                className="bg-[#1C716F] text-[#F9F3F0] hover:bg-[#065553] hover:text-[#F9F3F0] border-none font-['Verdana Pro Cond']"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  router.push(`/edit-listing/${listing._id}`);
-                }}
+              {/* Action Buttons - Moved here and always visible on mobile */}
+              <div className="flex gap-4 md:hidden">
+                {" "}
+                {/* Only show on mobile */}
+                <Button
+                  variant="outline"
+                  className="bg-[#1C716F] text-[#F9F3F0] hover:bg-[#065553] hover:text-[#F9F3F0] border-none font-['Verdana Pro Cond']"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/edit-listing/${listing._id}`);
+                  }}
+                >
+                  Edit
+                </Button>
+                <Button
+                  className="bg-[#ADA8B3] text-[#F9F3F0] hover:bg-red-500 hover:text-white transition-colors duration-200 font-['Verdana Pro Cond']"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteClick(listing._id);
+                  }}
+                >
+                  Delete
+                </Button>
+              </div>
+
+              {/* Desktop Action Buttons - Only visible on hover */}
+              <div
+                className={`absolute right-6 top-1/2 -translate-y-1/2 gap-4 hidden md:flex transition-opacity duration-200 z-20 ${
+                  isHovered ? "opacity-100" : "opacity-0"
+                }`}
               >
-                Edit
-              </Button>
-              <Button
-                className="bg-[#ADA8B3] text-[#F9F3F0] hover:bg-red-500 hover:text-white transition-colors duration-200 font-['Verdana Pro Cond']"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteClick(listing._id);
-                }}
-              >
-                Delete
-              </Button>
+                <Button
+                  variant="outline"
+                  className="bg-[#1C716F] text-[#F9F3F0] hover:bg-[#065553] hover:text-[#F9F3F0] border-none font-['Verdana Pro Cond']"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/edit-listing/${listing._id}`);
+                  }}
+                >
+                  Edit
+                </Button>
+                <Button
+                  className="bg-[#ADA8B3] text-[#F9F3F0] hover:bg-red-500 hover:text-white transition-colors duration-200 font-['Verdana Pro Cond']"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteClick(listing._id);
+                  }}
+                >
+                  Delete
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -333,17 +358,24 @@ const UserActivity: React.FC = () => {
       </div>
 
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-[#F9F3F0] border-[#ADA8B3] border-2">
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-xl text-[#065553] font-korolev tracking-wide">
+              Are you sure?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-600 font-['Verdana Pro Cond']">
               This action cannot be undone. This will permanently delete your
               food listing.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm}>
+            <AlertDialogCancel className="bg-[#F9F3F0] border-[#ADA8B3] border-2 text-[#1C716F] hover:bg-[#F9F3F0] hover:border-[#065553] hover:text-[#065553] font-['Verdana Pro Cond']">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-[#1C716F] hover:bg-[#065553] text-[#F9F3F0] font-['Verdana Pro Cond']"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

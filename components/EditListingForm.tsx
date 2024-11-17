@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { FoodListing } from "@/types";
+import { FoodListing, User } from "@/types";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -24,6 +24,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { TimePicker } from "@/components/ui/TimePicker";
 import { ArrowLeft } from "lucide-react";
+import { getCurrentUser } from "@/lib/auth";
 
 interface EditListingFormProps {
   listingId: string;
@@ -53,6 +54,7 @@ const EditListingForm: React.FC<EditListingFormProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const router = useRouter();
 
@@ -89,6 +91,18 @@ const EditListingForm: React.FC<EditListingFormProps> = ({
 
     fetchListing();
   }, [listingId]);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const user = await getCurrentUser();
+      if (user) {
+        setCurrentUser(user);
+      } else {
+        router.push("/login");
+      }
+    };
+    fetchUser();
+  }, [router]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -183,7 +197,7 @@ const EditListingForm: React.FC<EditListingFormProps> = ({
       );
 
       const formDataToSend = new FormData();
-      
+
       // Add basic fields
       formDataToSend.append("foodType", formData.foodType);
       formDataToSend.append("description", formData.description);
@@ -216,7 +230,7 @@ const EditListingForm: React.FC<EditListingFormProps> = ({
       const data = await response.json();
       console.log("Listing updated successfully:", data);
 
-      router.push('/listings');
+      router.push("/listings");
     } catch (err) {
       console.error("Error in handleSubmit:", err);
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -227,7 +241,7 @@ const EditListingForm: React.FC<EditListingFormProps> = ({
 
   return (
     <div className="flex flex-col min-h-screen bg-[#CCD9BF]">
-      <Navbar user={null} onLogout={() => router.push("/login")} />
+      <Navbar user={currentUser} onLogout={() => router.push("/login")} />
       <div className="flex-1 pt-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Button

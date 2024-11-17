@@ -68,7 +68,10 @@ const LoginForm: React.FC = () => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-[#1C716F] font-['Verdana Pro Cond']">
+            <Label
+              htmlFor="email"
+              className="text-[#1C716F] font-['Verdana Pro Cond']"
+            >
               Email
             </Label>
             <div className="relative">
@@ -85,7 +88,10 @@ const LoginForm: React.FC = () => {
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-[#1C716F] font-['Verdana Pro Cond']">
+            <Label
+              htmlFor="password"
+              className="text-[#1C716F] font-['Verdana Pro Cond']"
+            >
               Password
             </Label>
             <div className="relative">
@@ -115,8 +121,8 @@ const LoginForm: React.FC = () => {
         </form>
         <div className="mt-6 text-center text-gray-600 font-['Verdana Pro Cond']">
           Don&apos;t have an account?{" "}
-          <Link 
-            href="/signup" 
+          <Link
+            href="/signup"
             className="text-[#1C716F] hover:text-[#065553] hover:underline"
           >
             Sign up

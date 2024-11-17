@@ -325,20 +325,19 @@ export default function CreateListingForm({
                     htmlFor="expirationDate"
                     className="text-sm font-medium text-gray-600"
                   >
-                    Expiration Date
+                    Expiry Date
                   </Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         className={cn(
-                          "w-full pl-10 bg-[#F9F3F0] border-[#ada8b3] border-2 text-left font-['Verdana Pro Cond'] hover:bg-[#F9F3F0] hover:border-[#065553]",
+                          "w-full bg-[#F9F3F0] border-[#ada8b3] border-2 text-left font-['Verdana Pro Cond'] hover:bg-[#F9F3F0] hover:border-[#065553]",
                           formData.expirationDate
                             ? "text-gray-800"
                             : "text-gray-400 italic"
                         )}
                       >
-                        <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                         {formData.expirationDate
                           ? format(new Date(formData.expirationDate), "PPP")
                           : "Select expiry date"}
@@ -376,7 +375,7 @@ export default function CreateListingForm({
                     htmlFor="expirationTime"
                     className="text-sm font-medium text-gray-600"
                   >
-                    Expiration Time
+                    Expiry Time
                   </Label>
                   <TimePicker
                     value={formData.expirationTime}
@@ -386,6 +385,7 @@ export default function CreateListingForm({
                         expirationTime: time,
                       }))
                     }
+                    showIcon={false}
                   />
                 </div>
               </div>

@@ -21,6 +21,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AlertPopup } from "@/components/ui/AlertPopup";
+import { FormError } from "@/components/ui/FormError";
+import { cn } from "@/lib/utils";
 
 const countryCodes = [
   { code: "+91", country: "India" },
@@ -35,7 +38,18 @@ const countryCodes = [
   { code: "+39", country: "Italy" },
 ];
 
+interface Alert {
+  type: "success" | "error";
+  title: string;
+  message: string;
+}
+
+interface FieldErrors {
+  [key: string]: string;
+}
+
 const SignupForm: React.FC = () => {
+  const [alert, setAlert] = useState<Alert | null>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -44,6 +58,7 @@ const SignupForm: React.FC = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [countryCode, setCountryCode] = useState("+91");
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,8 +67,6 @@ const SignupForm: React.FC = () => {
     setError("");
 
     try {
-      const fullPhoneNumber = `${countryCode}${phoneNumber}`;
-
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -62,17 +75,34 @@ const SignupForm: React.FC = () => {
           email,
           password,
           location,
-          phoneNumber: fullPhoneNumber,
+          phoneNumber: countryCode + phoneNumber,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Signup failed");
+        if (data.error.includes("already registered")) {
+          setAlert({
+            type: "error",
+            title: "Registration Failed",
+            message: data.error,
+          });
+        } else {
+          throw new Error(data.error);
+        }
+        return;
       }
 
-      router.push("/login");
+      setAlert({
+        type: "success",
+        title: "Success",
+        message: data.message,
+      });
+
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
     } catch (err) {
       console.error("Signup error:", err);
       setError(err instanceof Error ? err.message : String(err));
@@ -81,167 +111,244 @@ const SignupForm: React.FC = () => {
     }
   };
 
-  return (
-    <Card className="w-full max-w-md bg-[#F9F3F0] border-[#ADA8B3] border-2 shadow-[0_4px_10px_rgba(0,0,0,0.1)]">
-      <CardHeader>
-        <CardTitle className="text-2xl text-[#065553] font-korolev tracking-wide">
-          Sign Up
-        </CardTitle>
-        <CardDescription className="text-gray-600 font-['Verdana Pro Cond']">
-          Create an account to start sharing and accessing food listings
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label
-              htmlFor="name"
-              className="text-[#1C716F] font-['Verdana Pro Cond']"
-            >
-              Username
-            </Label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <Input
-                id="name"
-                type="text"
-                placeholder="romxai"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="pl-10 bg-[#F9F3F0] border-[#ADA8B3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0 placeholder:text-gray-400 placeholder:italic font-['Verdana Pro Cond']"
-              />
-            </div>
-          </div>
+  const validateField = (name: string, value: string) => {
+    switch (name) {
+      case "email":
+        if (!value.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+          setFieldErrors((prev) => ({
+            ...prev,
+            email: "Invalid email address",
+          }));
+        } else {
+          setFieldErrors((prev) => {
+            const { email, ...rest } = prev;
+            return rest;
+          });
+        }
+        break;
+      case "phoneNumber":
+        if (!value.match(/^\d{10}$/)) {
+          setFieldErrors((prev) => ({
+            ...prev,
+            phoneNumber: "Invalid phone number",
+          }));
+        } else {
+          setFieldErrors((prev) => {
+            const { phoneNumber, ...rest } = prev;
+            return rest;
+          });
+        }
+        break;
+    }
+  };
 
-          <div className="space-y-2">
-            <Label
-              htmlFor="phone"
-              className="text-[#1C716F] font-['Verdana Pro Cond']"
-            >
-              Phone Number
-            </Label>
-            <div className="flex gap-2">
-              <Select value={countryCode} onValueChange={setCountryCode}>
-                <SelectTrigger className="w-[140px] bg-[#F9F3F0] border-[#ADA8B3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0 font-['Verdana Pro Cond']">
-                  <SelectValue placeholder="Code" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#F9F3F0] border-[#ADA8B3] border-2">
-                  {countryCodes.map((country) => (
-                    <SelectItem
-                      key={country.code}
-                      value={country.code}
-                      className="font-['Verdana Pro Cond']"
-                    >
-                      {`${country.code} ${country.country}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="relative flex-1">
-                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    switch (name) {
+      case "email":
+        setEmail(value);
+        break;
+      case "phoneNumber":
+        setPhoneNumber(value);
+        break;
+      // ... handle other fields
+    }
+    validateField(name, value);
+  };
+
+  return (
+    <>
+      <Card className="w-full max-w-md bg-[#F9F3F0] border-[#ADA8B3] border-2 shadow-[0_4px_10px_rgba(0,0,0,0.1)]">
+        <CardHeader>
+          <CardTitle className="text-2xl text-[#065553] font-korolev tracking-wide">
+            Sign Up
+          </CardTitle>
+          <CardDescription className="text-gray-600 font-['Verdana Pro Cond']">
+            Create an account to start sharing and accessing food listings
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label
+                htmlFor="name"
+                className="text-[#1C716F] font-['Verdana Pro Cond']"
+              >
+                Full Name
+              </Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="Phone number"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  id="name"
+                  type="text"
+                  placeholder="Dwayne Silvapinto"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   required
-                  className="pl-10 bg-[#F9F3F0] border-[#ADA8B3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0 placeholder:text-gray-400 placeholder:italic font-['Verdana Pro Cond'] w-full"
+                  className="pl-10 bg-[#F9F3F0] border-[#ADA8B3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0 placeholder:text-gray-400 placeholder:italic font-['Verdana Pro Cond']"
                 />
               </div>
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label
-              htmlFor="email"
-              className="text-[#1C716F] font-['Verdana Pro Cond']"
-            >
-              Email
-            </Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="pl-10 bg-[#F9F3F0] border-[#ADA8B3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0 placeholder:text-gray-400 placeholder:italic font-['Verdana Pro Cond']"
-              />
+            <div className="space-y-2">
+              <Label
+                htmlFor="phone"
+                className="text-[#1C716F] font-['Verdana Pro Cond']"
+              >
+                Phone Number
+              </Label>
+              <div className="flex gap-2">
+                <Select value={countryCode} onValueChange={setCountryCode}>
+                  <SelectTrigger className="w-[140px] sm:w-[140px] w-[100px] bg-[#F9F3F0] border-[#ADA8B3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0 font-['Verdana Pro Cond']">
+                    <SelectValue placeholder="Code" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#F9F3F0] border-[#ADA8B3] border-2">
+                    {countryCodes.map((country) => (
+                      <SelectItem
+                        key={country.code}
+                        value={country.code}
+                        className="font-['Verdana Pro Cond']"
+                      >
+                        {`${country.code} ${country.country}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="relative flex-1">
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                  <Input
+                    id="phone"
+                    name="phoneNumber"
+                    type="tel"
+                    placeholder="Phone number"
+                    value={phoneNumber}
+                    onChange={handleInputChange}
+                    required
+                    className={cn(
+                      "pl-10 bg-[#F9F3F0] border-2 text-gray-800 focus:border-[#065553] focus:ring-0 placeholder:text-gray-400 placeholder:italic font-['Verdana Pro Cond'] w-full",
+                      fieldErrors.phoneNumber
+                        ? "border-red-400 focus:border-red-400"
+                        : "border-[#ADA8B3]"
+                    )}
+                  />
+                </div>
+              </div>
+              {fieldErrors.phoneNumber && (
+                <FormError message="Invalid phone number" />
+              )}
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label
-              htmlFor="password"
-              className="text-[#1C716F] font-['Verdana Pro Cond']"
-            >
-              Password
-            </Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <Input
-                id="password"
-                type="password"
-                placeholder="Your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="pl-10 bg-[#F9F3F0] border-[#ADA8B3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0 placeholder:text-gray-400 placeholder:italic font-['Verdana Pro Cond']"
-              />
+            <div className="space-y-2">
+              <Label
+                htmlFor="email"
+                className="text-[#1C716F] font-['Verdana Pro Cond']"
+              >
+                Email
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={handleInputChange}
+                  required
+                  className={cn(
+                    "pl-10 bg-[#F9F3F0] border-2 text-gray-800 focus:border-[#065553] focus:ring-0 placeholder:text-gray-400 placeholder:italic font-['Verdana Pro Cond']",
+                    fieldErrors.email
+                      ? "border-red-400 focus:border-red-400"
+                      : "border-[#ADA8B3]"
+                  )}
+                />
+              </div>
+              {fieldErrors.email && <FormError message={fieldErrors.email} />}
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label
-              htmlFor="location"
-              className="text-[#1C716F] font-['Verdana Pro Cond']"
-            >
-              Location
-            </Label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <Input
-                id="location"
-                type="text"
-                placeholder="Chembur, Mumbai"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                required
-                className="pl-10 bg-[#F9F3F0] border-[#ADA8B3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0 placeholder:text-gray-400 placeholder:italic font-['Verdana Pro Cond']"
-              />
+            <div className="space-y-2">
+              <Label
+                htmlFor="password"
+                className="text-[#1C716F] font-['Verdana Pro Cond']"
+              >
+                Password
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="pl-10 bg-[#F9F3F0] border-[#ADA8B3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0 placeholder:text-gray-400 placeholder:italic font-['Verdana Pro Cond']"
+                />
+              </div>
             </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="location"
+                className="text-[#1C716F] font-['Verdana Pro Cond']"
+              >
+                Location
+              </Label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <Input
+                  id="location"
+                  type="text"
+                  placeholder="Chembur, Mumbai"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  required
+                  className="pl-10 bg-[#F9F3F0] border-[#ADA8B3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0 placeholder:text-gray-400 placeholder:italic font-['Verdana Pro Cond']"
+                />
+              </div>
+            </div>
+
+            {error && (
+              <div className="bg-[#F9F3F0] border-2 border-red-400 p-3 rounded-xl">
+                <p className="text-xs text-red-600 font-['Verdana Pro Cond']">
+                  <FormError
+                    message={error}
+                    includeLoginLink={error.includes("already registered")}
+                  />
+                </p>
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full bg-[#1C716F] hover:bg-[#065553] text-[#F9F3F0] font-['Verdana Pro Cond']"
+              disabled={loading}
+            >
+              {loading ? "Signing up..." : "Sign Up"}
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center text-gray-600 font-['Verdana Pro Cond']">
+            Already have an account?{" "}
+            <Link
+              href="/login"
+              className="text-[#1C716F] hover:text-[#065553] hover:underline"
+            >
+              Log in
+            </Link>
           </div>
+        </CardContent>
+      </Card>
 
-          {error && (
-            <p className="text-red-500 text-sm font-['Verdana Pro Cond']">
-              {error}
-            </p>
-          )}
-
-          <Button
-            type="submit"
-            className="w-full bg-[#1C716F] hover:bg-[#065553] text-[#F9F3F0] font-['Verdana Pro Cond']"
-            disabled={loading}
-          >
-            {loading ? "Signing up..." : "Sign Up"}
-          </Button>
-        </form>
-
-        <div className="mt-6 text-center text-gray-600 font-['Verdana Pro Cond']">
-          Already have an account?{" "}
-          <Link
-            href="/login"
-            className="text-[#1C716F] hover:text-[#065553] hover:underline"
-          >
-            Log in
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
+      {alert && (
+        <AlertPopup
+          type={alert.type}
+          title={alert.title}
+          message={alert.message}
+          onClose={() => setAlert(null)}
+        />
+      )}
+    </>
   );
 };
 

@@ -9,9 +9,26 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
 import { User } from "@/types";
-import { Settings, Activity, LogOut, ChevronDown, Heart } from "lucide-react";
+import {
+  Settings,
+  Activity,
+  LogOut,
+  ChevronDown,
+  Heart,
+  Menu,
+  X,
+} from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import { MobileSidebar } from "./MobileSidebar";
 
 interface NavbarProps {
   user: User | null;
@@ -35,14 +52,14 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
         <div className="flex justify-between items-center h-full">
           {/* Logo/Site Name */}
           <div
-            className="text-2xl font-bold text-[#1C716F] cursor-pointer font-korolev tracking-wide"
+            className="text-2xl font-bold text-[#1C716F] cursor-pointer font-korolev tracking-wide md:ml-0 ml-4"
             onClick={() => router.push("/")}
           >
             FoodShare
           </div>
 
-          {/* Right Section */}
-          <div className="flex items-center space-x-8">
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-8">
             {/* Donate Food Button */}
             <Button
               variant="ghost"
@@ -59,7 +76,9 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
               className="text-[#1C716F] hover:text-[#065553] transition-colors font-['Verdana Pro Cond']"
               onClick={() => {
                 if (window.location.pathname === "/") {
-                  document.getElementById("about")?.scrollIntoView({ behavior: "smooth" });
+                  document
+                    .getElementById("about")
+                    ?.scrollIntoView({ behavior: "smooth" });
                 } else {
                   router.push("/#about");
                 }
@@ -80,29 +99,42 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 bg-[#F9F3F0] border-[#ADA8B3] border-2" align="end">
+                <DropdownMenuContent
+                  className="w-56 bg-[#F9F3F0] border-[#ADA8B3] border-2"
+                  align="end"
+                >
                   <DropdownMenuLabel className="font-korolev text-[#1C716F] tracking-wide">
                     My Account
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-[#ADA8B3]" />
                   <DropdownMenuGroup>
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={() => router.push("/settings")}
                       className="font-['Verdana Pro Cond'] text-gray-600 hover:text-[#065553] hover:bg-[#CCD9BF] cursor-pointer"
                     >
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Settings</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={() => router.push("/account")}
                       className="font-['Verdana Pro Cond'] text-gray-600 hover:text-[#065553] hover:bg-[#CCD9BF] cursor-pointer"
                     >
                       <Activity className="mr-2 h-4 w-4" />
-                      <span>Listings</span>
+                      <span>Your Listings</span>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator className="bg-[#ADA8B3]" />
-                  <DropdownMenuItem 
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem
+                      onClick={() => router.push("/create-listing")}
+                      className="font-['Verdana Pro Cond'] text-gray-600 hover:text-[#065553] hover:bg-[#CCD9BF] cursor-pointer"
+                    >
+                      <Heart className="mr-2 h-4 w-4" />
+                      <span>Create Listing</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator className="bg-[#ADA8B3]" />
+                  <DropdownMenuItem
                     onClick={onLogout}
                     className="font-['Verdana Pro Cond'] text-gray-600 hover:text-[#065553] hover:bg-[#CCD9BF] cursor-pointer"
                   >
@@ -112,6 +144,31 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
+          </div>
+
+          {/* Mobile Menu Button */}
+          <div className="md:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-6 w-6 text-[#1C716F]" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="p-0">
+                <MobileSidebar
+                  user={user}
+                  onLogout={onLogout}
+                  onClose={() => {
+                    const closeButton = document.querySelector(
+                      "[data-radix-collection-item]"
+                    );
+                    if (closeButton instanceof HTMLElement) {
+                      closeButton.click();
+                    }
+                  }}
+                />
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>
