@@ -4,6 +4,7 @@ import { ObjectId } from "mongodb";
 import { verifyToken } from "@/lib/auth";
 import fs from "fs/promises";
 import path from "path";
+import { put } from '@vercel/blob';
 
 export async function GET(request: Request) {
   try {
@@ -167,81 +168,72 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader) {
-    console.log("Unauthorized: No auth header");
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const token = authHeader.split(" ")[1];
-  const user = await verifyToken(token);
-
-  if (!user) {
-    console.log("Unauthorized: Invalid token");
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
-    const { db } = await connectToDatabase();
+    // Auth check
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const token = authHeader.split("Bearer ").pop();
+    if (!token) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
+    const user = await verifyToken(token);
+    if (!user) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
     const formData = await request.formData();
+    const { db } = await connectToDatabase();
 
-    const imagePaths: string[] = [];
-
-    for (let i = 0; i < 5; i++) {
-      const file = formData.get(`image${i}`) as File | null;
-      if (file) {
-        const buffer = await file.arrayBuffer();
-        const filename = Date.now() + "-" + file.name;
-        const uploadDir = path.join(process.cwd(), "public", "uploads");
-
-        await ensureDirectoryExists(uploadDir);
-
-        const imagePath = `/uploads/${filename}`;
-        const filePath = path.join(uploadDir, filename);
-
-        await fs.writeFile(filePath, Buffer.from(buffer));
-        imagePaths.push(imagePath);
+    // Handle image uploads with Vercel Blob
+    const imageUrls: string[] = [];
+    for (let i = 0; ; i++) {
+      const imageFile = formData.get(`image${i}`);
+      if (!imageFile) break;
+      
+      if (imageFile instanceof Blob) {
+        try {
+          // Upload to Vercel Blob with unique filename
+          const blob = await put(`listings/${Date.now()}-${i}.jpg`, imageFile, {
+            access: 'public',
+            addRandomSuffix: true
+          });
+          imageUrls.push(blob.url);
+        } catch (error) {
+          console.error('Image upload error:', error);
+          continue;
+        }
       }
     }
 
-    const data = Object.fromEntries(formData.entries());
-    const expiration = new Date(data.expiration as string);
-
-    // Convert quantity to a number
-    const quantity = parseFloat(data.quantity as string);
-    if (isNaN(quantity)) {
-      return NextResponse.json({ error: "Invalid quantity" }, { status: 400 });
-    }
-
-    const newListing = {
-      ...data,
-      quantity, // Store as a number
-      expiration,
-      imagePaths,
+    // Create listing with image URLs
+    const listingData = {
+      foodType: formData.get("foodType"),
+      description: formData.get("description"),
+      quantity: parseFloat(formData.get("quantity") as string),
+      quantityUnit: formData.get("quantityUnit"),
+      expiration: new Date(formData.get("expiration") as string),
+      location: formData.get("location"),
       postedBy: user.id,
+      imagePaths: imageUrls, // Store the Vercel Blob URLs
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    console.log("New listing:", newListing);
+    const result = await db.collection("foodlistings").insertOne(listingData);
 
-    const result = await db.collection("foodlistings").insertOne(newListing);
+    return NextResponse.json({
+      message: "Listing created successfully",
+      listingId: result.insertedId,
+    });
 
-    return NextResponse.json(
-      {
-        message: "Listing created successfully",
-        id: result.insertedId.toString(),
-        imagePaths,
-      },
-      { status: 201 }
-    );
   } catch (error) {
-    console.error("Error creating listing:", error);
+    console.error("Create listing error:", error);
     return NextResponse.json(
-      {
-        error: "Internal Server Error",
-        details: error instanceof Error ? error.message : String(error),
-      },
+      { error: "Failed to create listing" },
       { status: 500 }
     );
   }

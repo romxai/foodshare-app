@@ -52,8 +52,10 @@ export function MobileSidebar({ user, onLogout, onClose }: MobileSidebarProps) {
   const router = useRouter();
 
   const handleNavigation = (path: string) => {
-    router.push(path);
     onClose();
+    setTimeout(() => {
+      router.push(path);
+    }, 100);
   };
 
   return (

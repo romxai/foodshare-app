@@ -88,12 +88,22 @@ export default function CreateListingForm({
     }));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newImages = Array.from(e.target.files);
+      
+      // Check number of images
       if (formData.images.length + newImages.length > 5) {
         setError("You can only upload up to 5 images");
         return;
+      }
+
+      // Check file sizes
+      for (const image of newImages) {
+        if (image.size > 5 * 1024 * 1024) { // 5MB limit
+          setError("Each image must be less than 5MB");
+          return;
+        }
       }
 
       setFormData((prev) => ({
@@ -101,6 +111,7 @@ export default function CreateListingForm({
         images: [...prev.images, ...newImages],
       }));
 
+      // Create preview URLs
       const newPreviewUrls = newImages.map((file) => URL.createObjectURL(file));
       setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
     }
@@ -120,11 +131,6 @@ export default function CreateListingForm({
     setError(null);
 
     try {
-      const user = await getCurrentUser();
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-
       const token = localStorage.getItem("token");
       if (!token) {
         throw new Error("No authentication token found");
@@ -148,7 +154,6 @@ export default function CreateListingForm({
         formDataToSend.append(`image${index}`, image);
       });
 
-      console.log("Sending request to create listing...");
       const response = await fetch("/api/listings", {
         method: "POST",
         headers: {
@@ -157,15 +162,10 @@ export default function CreateListingForm({
         body: formDataToSend,
       });
 
-      console.log("Response status:", response.status);
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Error response:", errorData);
         throw new Error(errorData.error || "Failed to create listing");
       }
-
-      const data = await response.json();
-      console.log("Listing created successfully:", data);
 
       router.push("/listings");
     } catch (err) {

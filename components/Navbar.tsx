@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +36,7 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const router = useRouter();
 
   const handleDonateClick = () => {
@@ -148,24 +149,23 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
 
           {/* Mobile Menu Button */}
           <div className="md:hidden">
-            <Sheet>
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
                   <Menu className="h-6 w-6 text-[#1C716F]" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="p-0">
-                <MobileSidebar
-                  user={user}
-                  onLogout={onLogout}
-                  onClose={() => {
-                    const closeButton = document.querySelector(
-                      "[data-radix-collection-item]"
-                    );
-                    if (closeButton instanceof HTMLElement) {
-                      closeButton.click();
-                    }
+              <SheetContent 
+                className="p-0 w-full sm:w-[400px]"
+                onPointerDownOutside={(e) => e.preventDefault()}
+              >
+                <MobileSidebar 
+                  user={user} 
+                  onLogout={() => {
+                    setIsSheetOpen(false);
+                    onLogout();
                   }}
+                  onClose={() => setIsSheetOpen(false)}
                 />
               </SheetContent>
             </Sheet>
