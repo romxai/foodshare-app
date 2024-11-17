@@ -3,15 +3,9 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { verifyToken } from "@/lib/auth";
 import { ObjectId } from "mongodb";
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
 export async function GET(
   request: NextRequest,
-  { params }: RouteParams
+  context: { params: { id: string } }
 ) {
   try {
     const authHeader = request.headers.get("Authorization");
@@ -29,7 +23,7 @@ export async function GET(
     const { db } = await connectToDatabase();
 
     const listing = await db.collection("foodlistings").findOne({
-      _id: new ObjectId(params.id),
+      _id: new ObjectId(context.params.id),
     });
 
     if (!listing) {
@@ -48,7 +42,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: RouteParams
+  context: { params: { id: string } }
 ) {
   try {
     const authHeader = request.headers.get("Authorization");
@@ -99,7 +93,7 @@ export async function PUT(
 
     const result = await db
       .collection("foodlistings")
-      .updateOne({ _id: new ObjectId(params.id) }, { $set: updateData });
+      .updateOne({ _id: new ObjectId(context.params.id) }, { $set: updateData });
 
     if (result.matchedCount === 0) {
       return NextResponse.json({ error: "Listing not found" }, { status: 404 });
