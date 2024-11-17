@@ -3,12 +3,18 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { verifyToken } from "@/lib/auth";
 import { ObjectId } from "mongodb";
 
+type Props = {
+  params: {
+    id: string;
+  };
+};
+
 export async function GET(
-  request: NextRequest,
-  context: { params: { id: string } }
+  req: Request,
+  { params }: Props
 ) {
   try {
-    const authHeader = request.headers.get("Authorization");
+    const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -21,9 +27,9 @@ export async function GET(
     }
 
     const { db } = await connectToDatabase();
-
+    
     const listing = await db.collection("foodlistings").findOne({
-      _id: new ObjectId(context.params.id),
+      _id: new ObjectId(params.id)
     });
 
     if (!listing) {
@@ -41,11 +47,11 @@ export async function GET(
 }
 
 export async function PUT(
-  request: NextRequest,
-  context: { params: { id: string } }
+  req: Request,
+  { params }: Props
 ) {
   try {
-    const authHeader = request.headers.get("Authorization");
+    const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -58,7 +64,7 @@ export async function PUT(
     }
 
     const { db } = await connectToDatabase();
-    const formData = await request.formData();
+    const formData = await req.formData();
 
     // Get existing images that weren't removed
     const existingImages = JSON.parse(formData.get("existingImages") as string);
@@ -93,7 +99,7 @@ export async function PUT(
 
     const result = await db
       .collection("foodlistings")
-      .updateOne({ _id: new ObjectId(context.params.id) }, { $set: updateData });
+      .updateOne({ _id: new ObjectId(params.id) }, { $set: updateData });
 
     if (result.matchedCount === 0) {
       return NextResponse.json({ error: "Listing not found" }, { status: 404 });
