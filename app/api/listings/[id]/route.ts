@@ -9,10 +9,7 @@ type Props = {
   };
 };
 
-export async function GET(
-  req: Request,
-  { params }: Props
-) {
+export async function GET(req: Request, { params }: Props) {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -27,9 +24,9 @@ export async function GET(
     }
 
     const { db } = await connectToDatabase();
-    
+
     const listing = await db.collection("foodlistings").findOne({
-      _id: new ObjectId(params.id)
+      _id: new ObjectId(params.id),
     });
 
     if (!listing) {
@@ -46,10 +43,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  req: Request,
-  { params }: Props
-) {
+export async function PUT(req: Request, { params }: Props) {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {

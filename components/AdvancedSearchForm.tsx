@@ -100,7 +100,10 @@ const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Location Dropdown */}
         <div className="space-y-2">
-          <Label htmlFor="location" className="text-sm font-medium text-gray-600">
+          <Label
+            htmlFor="location"
+            className="text-sm font-medium text-gray-600"
+          >
             Location
           </Label>
           <Select value={location} onValueChange={setLocation}>
@@ -129,7 +132,10 @@ const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
 
         {/* Date Posted */}
         <div className="space-y-2">
-          <Label htmlFor="datePosted" className="text-sm font-medium text-gray-600">
+          <Label
+            htmlFor="datePosted"
+            className="text-sm font-medium text-gray-600"
+          >
             Date Posted
           </Label>
           <Popover>
@@ -161,7 +167,10 @@ const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
 
         {/* Expiry Date */}
         <div className="space-y-2">
-          <Label htmlFor="expiryDate" className="text-sm font-medium text-gray-600">
+          <Label
+            htmlFor="expiryDate"
+            className="text-sm font-medium text-gray-600"
+          >
             Expiry Date
           </Label>
           <Popover>
