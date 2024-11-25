@@ -91,24 +91,39 @@ const HomePage: React.FC = () => {
             </h2>
             <div className="space-y-6 text-gray-600 font-['Verdana Pro Cond']">
               <p className="text-lg">
-                FoodShare is a community-driven platform dedicated to reducing
-                food waste and fostering connections through the sharing of
-                food. We believe that every meal has the potential to make a
-                difference in someone's life.
+                Welcome to FoodShare, a heartfelt initiative founded by Ishaan
+                Taparia, a 17-year-old passionate cook and change-maker from
+                Mumbai.
               </p>
               <p className="text-lg">
-                Our mission is to create a sustainable and compassionate food
-                sharing ecosystem where surplus food finds its way to those who
-                need it most. Whether you're a restaurant with extra meals, a
-                home cook with leftovers, or someone looking to help your
-                community, FoodShare provides a platform to make that
-                connection.
+                My journey with food began when I was 9 years old, experimenting in
+                the kitchen by grilling vegetables. Over the years, cooking became
+                more than a skill—it became my creative outlet, allowing me to
+                craft any dish I could dream of. However, as I grew older, I came
+                to realize the stark contrast between the joy of cooking and the
+                harsh reality that millions of people face: the lack of food on
+                their plates.
               </p>
               <p className="text-lg">
-                Join us in our journey to reduce food waste, strengthen
-                community bonds, and make a positive impact on both people and
-                the planet. Together, we can create a world where good food
-                never goes to waste.
+                At 16, this realization became a turning point. I knew I had to
+                act. A year later, FoodShare was born with a mission to bridge the
+                gap between surplus and scarcity. Our platform is dedicated to
+                redistributing leftover food from homes, events, and restaurants to
+                those in need.
+              </p>
+              <p className="text-lg">
+                Through innovation, community collaboration, and compassion, we
+                strive to ensure that good food never goes to waste and that no one
+                goes to bed hungry.
+              </p>
+              <p className="text-lg">
+                Join us in making a difference—because together, we can turn excess
+                into empowerment.
+              </p>
+              <p className="text-lg italic text-[#065553] font-medium">
+                "Food is not just nourishment; it's a symbol of care, hope, and
+                humanity."
+                <br />~ Ishaan Taparia
               </p>
             </div>
           </motion.div>
@@ -130,28 +145,35 @@ const HomePage: React.FC = () => {
             </h2>
             <div className="space-y-6 text-gray-600 font-['Verdana Pro Cond']">
               <p className="text-lg">
-                FoodShare began with a simple observation: while some had
-                surplus food that would go to waste, others in our community
-                were in need. This realization sparked the idea for a platform
-                that could bridge this gap.
+                It all started when I was 9 years old. I discovered my love for
+                cooking by grilling vegetables in my kitchen, and over time, it
+                became something much more than just a hobby. Cooking gave me the
+                freedom to bring any dish I imagined to life, and it became a big
+                part of who I am.
               </p>
               <p className="text-lg">
-                Founded in 2024, our journey started in Mumbai, where we
-                witnessed firsthand the disconnect between food surplus and
-                scarcity. What began as a small local initiative has grown into
-                a vibrant community of food-sharing enthusiasts.
+                But as I grew older, I started noticing something that didn't sit
+                right with me. While I was experimenting with flavors and creating
+                meals, there were people out there who didn't even have access to
+                basic food. This realization hit me hard when I turned 16, and I
+                couldn't shake the thought of how much food gets wasted while so
+                many people go hungry.
               </p>
               <p className="text-lg">
-                Today, FoodShare serves as a testament to the power of community
-                action. Our platform has facilitated countless connections,
-                prevented tons of food waste, and helped nurture a more
-                sustainable and caring society.
+                That's when the idea for this platform began. At 17, I decided to
+                take action. I created FoodShare, a space where leftover food could
+                be given a second chance—redistributed to people who need it most.
               </p>
               <p className="text-lg">
-                We continue to grow and evolve, driven by our commitment to
-                making food sharing as simple and accessible as possible. Every
-                shared meal represents a step towards our vision of a world
-                where good food brings people together and never goes to waste.
+                This isn't just about food for me; it's about dignity, kindness,
+                and building a community where we look out for each other. Every
+                meal we save, every smile we see, reminds me why this is so
+                important.
+              </p>
+              <p className="text-lg">
+                This is my story, but it's also about us—about how we can all play
+                a part in creating a world where food brings people together, not
+                apart. Let's make it happen, one plate at a time.
               </p>
             </div>
           </motion.div>

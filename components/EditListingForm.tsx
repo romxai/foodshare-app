@@ -69,7 +69,7 @@ const EditListingForm: React.FC<EditListingFormProps> = ({
         if (response.ok) {
           const data = await response.json();
           setListing(data);
-          setExistingImages(data.imagePaths || []);
+          setExistingImages(data.images || []);
           setFormData({
             foodType: data.foodType,
             description: data.description,
@@ -163,18 +163,7 @@ const EditListingForm: React.FC<EditListingFormProps> = ({
 
   const removeExistingImage = async (imageUrl: string) => {
     try {
-      const response = await fetch(`/api/listings/${listingId}/images`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify({ imageUrl }),
-      });
-
-      if (response.ok) {
-        setExistingImages((prev) => prev.filter((img) => img !== imageUrl));
-      }
+      setExistingImages((prev) => prev.filter((img) => img !== imageUrl));
     } catch (error) {
       console.error("Error removing image:", error);
       setError("Failed to remove image");

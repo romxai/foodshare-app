@@ -1,8 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import useEmblaCarousel from 'embla-carousel-react';
-import Autoplay from 'embla-carousel-autoplay';
-import Image from 'next/image';
-import { motion } from 'framer-motion';
+import Image from "next/image";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from "@/components/ui/carousel";
+import { useEffect, useState } from "react";
 
 interface ImageCarouselProps {
   images: string[];
@@ -10,64 +13,56 @@ interface ImageCarouselProps {
 }
 
 const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, onImageClick }) => {
-  const [emblaRef, emblaApi] = useEmblaCarousel(
-    { loop: true },
-    [Autoplay({ delay: 2000, stopOnInteraction: false })]
-  );
-  const [selectedIndex, setSelectedIndex] = useState(0);
-
-  const onSelect = useCallback(() => {
-    if (!emblaApi) return;
-    setSelectedIndex(emblaApi.selectedScrollSnap());
-  }, [emblaApi]);
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
 
   useEffect(() => {
-    if (!emblaApi) return;
-    onSelect();
-    emblaApi.on('select', onSelect);
-    return () => {
-      emblaApi.off('select', onSelect);
-    };
-  }, [emblaApi, onSelect]);
+    if (!api) return;
+
+    api.on("select", () => {
+      setCurrent(api.selectedScrollSnap());
+    });
+  }, [api]);
+
+  useEffect(() => {
+    if (!api) return;
+
+    const interval = setInterval(() => {
+      if (current === images.length - 1) {
+        api.scrollTo(0, false);
+      } else {
+        api.scrollNext();
+      }
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [api, current, images.length]);
 
   return (
-    <div className="relative h-full">
-      <div className="overflow-hidden h-full" ref={emblaRef}>
-        <div className="flex h-full">
-          {images.map((image, index) => (
-            <div key={index} className="flex-[0_0_100%] h-full min-w-0">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="relative h-full w-full cursor-pointer"
-                onClick={() => onImageClick(image.startsWith("/") ? image : `/${image}`)}
-              >
-                <Image
-                  src={image.startsWith("/") ? image : `/${image}`}
-                  alt={`Image ${index + 1}`}
-                  layout="fill"
-                  objectFit="cover"
-                  className="rounded-t-xl md:rounded-t-none md:rounded-l-xl"
-                  priority={index === 0}
-                />
-              </motion.div>
+    <Carousel className="w-full h-48" setApi={setApi}>
+      <CarouselContent className="h-full">
+        {images.map((image, index) => (
+          <CarouselItem key={index} className="h-full">
+            <div 
+              className="relative w-full h-48" 
+              onClick={() => onImageClick(image)}
+            >
+              <Image
+                src={image}
+                alt={`Image ${index + 1}`}
+                fill
+                style={{ objectFit: "cover" }}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                priority={index === 0}
+                quality={75}
+                loading={index === 0 ? "eager" : "lazy"}
+                className="rounded-lg"
+              />
             </div>
-          ))}
-        </div>
-      </div>
-
-      {images.length > 1 && (
-        <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2 z-10">
-          {images.map((_, index) => (
-            <div
-              key={index}
-              className={`h-2 w-2 rounded-full transition-all duration-300 ${
-                index === selectedIndex ? "bg-white" : "bg-white/50"
-              }`}
-            />
-          ))}
-        </div>
-      )}
-    </div>
+          </CarouselItem>
+        ))}
+      </CarouselContent>
+    </Carousel>
   );
 };
 

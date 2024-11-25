@@ -21,6 +21,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ListingDetailsSkeleton } from "@/components/ui/ListingDetailsSkeleton";
 import { useAuthGuard } from "@/utils/authGuard";
 import Footer from "@/components/Footer";
+import FullScreenImage from "@/components/FullScreenImage";
 
 interface ListingDetailsProps {
   id: string;
@@ -39,6 +40,8 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
   const [selectedImage, setSelectedImage] = useState<string>("");
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -64,7 +67,7 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
         if (response.ok) {
           const data = await response.json();
           setListing(data);
-          setSelectedImage(data.imagePaths[0]);
+          setSelectedImage(data.images[0]);
 
           // Fetch seller details
           const sellerResponse = await fetch("/api/users", {
@@ -141,18 +144,41 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Image Section */}
               <div className="space-y-4">
-                <div className="relative aspect-square rounded-lg overflow-hidden">
+                <div 
+                  className="relative w-full aspect-square rounded-lg overflow-hidden cursor-pointer bg-gray-100"
+                  onClick={() => setFullScreenImage(selectedImage)}
+                >
+                  {/* Loading placeholder */}
+                  {imageLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-8 h-8 border-4 border-[#1C716F] border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  )}
+                  
                   <Image
                     src={selectedImage}
                     alt={listing.foodType}
-                    layout="fill"
-                    objectFit="cover"
-                    className="rounded-lg"
+                    fill
+                    style={{ objectFit: "cover" }}
+                    className={`rounded-lg transition-opacity duration-300 ${
+                      imageLoading ? 'opacity-0' : 'opacity-100'
+                    }`}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    priority
+                    quality={85}
+                    onLoadingComplete={() => setImageLoading(false)}
+                    placeholder="blur"
+                    blurDataURL={`data:image/svg+xml;base64,${Buffer.from(
+                      `<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="400" height="400" fill="#CCCCCC"/>
+                      </svg>`
+                    ).toString('base64')}`}
                   />
                 </div>
-                {listing.imagePaths && listing.imagePaths.length > 1 && (
+                
+                {listing.images && listing.images.length > 1 && (
                   <div className="flex gap-2 overflow-x-auto py-2">
-                    {listing.imagePaths.map((image, index) => (
+                    {listing.images.map((image: string, index: number) => (
                       <motion.div
                         key={index}
                         whileHover={{ scale: 1.05 }}
@@ -161,19 +187,34 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
                             ? "ring-2 ring-emerald-500"
                             : "opacity-70"
                         }`}
-                        onClick={() => setSelectedImage(image)}
+                        onClick={() => {
+                          setImageLoading(true);
+                          setSelectedImage(image);
+                        }}
                       >
                         <Image
                           src={image}
                           alt={`${listing.foodType} ${index + 1}`}
-                          layout="fill"
-                          objectFit="cover"
+                          fill
+                          style={{ objectFit: "cover" }}
+                          sizes="(max-width: 768px) 33vw, 20vw"
+                          loading="lazy"
+                          quality={60} // Lower quality for thumbnails
                         />
                       </motion.div>
                     ))}
                   </div>
                 )}
               </div>
+
+              {/* Add FullScreenImage component */}
+              {fullScreenImage && (
+                <FullScreenImage
+                  src={fullScreenImage}
+                  alt="Full screen image"
+                  onClose={() => setFullScreenImage(null)}
+                />
+              )}
 
               {/* Details Section */}
               <div className="space-y-6">

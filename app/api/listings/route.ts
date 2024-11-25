@@ -2,8 +2,31 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { verifyToken } from "@/lib/auth";
-import fs from "fs/promises";
-import path from "path";
+import cloudinary from "@/lib/cloudinary";
+import streamifier from 'streamifier';
+
+async function uploadToCloudinary(file: File): Promise<string> {
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: 'food-listings',
+        transformation: [
+          { width: 800, height: 800, crop: 'limit' },
+          { quality: 'auto' },
+          { fetch_format: 'auto' }
+        ]
+      },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result!.secure_url);
+      }
+    );
+
+    streamifier.createReadStream(buffer).pipe(uploadStream);
+  });
+}
 
 export async function GET(request: Request) {
   try {
@@ -169,7 +192,6 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const authHeader = request.headers.get("Authorization");
   if (!authHeader) {
-    console.log("Unauthorized: No auth header");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -177,7 +199,6 @@ export async function POST(request: Request) {
   const user = await verifyToken(token);
 
   if (!user) {
-    console.log("Unauthorized: Invalid token");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -185,45 +206,37 @@ export async function POST(request: Request) {
     const { db } = await connectToDatabase();
     const formData = await request.formData();
 
-    const imagePaths: string[] = [];
-
+    // Upload images to Cloudinary
+    const imageUrls: string[] = [];
     for (let i = 0; i < 5; i++) {
       const file = formData.get(`image${i}`) as File | null;
       if (file) {
-        const buffer = await file.arrayBuffer();
-        const filename = Date.now() + "-" + file.name;
-        const uploadDir = path.join(process.cwd(), "public", "uploads");
-
-        await ensureDirectoryExists(uploadDir);
-
-        const imagePath = `/uploads/${filename}`;
-        const filePath = path.join(uploadDir, filename);
-
-        await fs.writeFile(filePath, Buffer.from(buffer));
-        imagePaths.push(imagePath);
+        try {
+          const imageUrl = await uploadToCloudinary(file);
+          imageUrls.push(imageUrl);
+        } catch (error) {
+          console.error(`Error uploading image ${i}:`, error);
+        }
       }
     }
 
     const data = Object.fromEntries(formData.entries());
     const expiration = new Date(data.expiration as string);
-
-    // Convert quantity to a number
     const quantity = parseFloat(data.quantity as string);
+
     if (isNaN(quantity)) {
       return NextResponse.json({ error: "Invalid quantity" }, { status: 400 });
     }
 
     const newListing = {
       ...data,
-      quantity, // Store as a number
+      quantity,
       expiration,
-      imagePaths,
+      images: imageUrls,
       postedBy: user.id,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-
-    console.log("New listing:", newListing);
 
     const result = await db.collection("foodlistings").insertOne(newListing);
 
@@ -231,7 +244,7 @@ export async function POST(request: Request) {
       {
         message: "Listing created successfully",
         id: result.insertedId.toString(),
-        imagePaths,
+        images: imageUrls,
       },
       { status: 201 }
     );
@@ -365,13 +378,3 @@ export async function DELETE(request: Request) {
     );
   }
 }
-
-// Ensure uploads directory exists
-const ensureDirectoryExists = async (directory: string) => {
-  try {
-    await fs.mkdir(directory, { recursive: true });
-    //console.log("Directory ensured:", directory);
-  } catch (error) {
-    console.error("Error creating directory:", error);
-  }
-};

@@ -16,7 +16,7 @@ export interface FoodListing {
   quantityUnit: string;
   expiration: string;
   location: string;
-  imagePaths?: string[];
+  images: string[];
   postedBy: string;
   createdAt: string;
   updatedAt: string;

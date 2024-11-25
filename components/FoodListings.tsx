@@ -97,7 +97,6 @@ const FoodListings: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
 
   const router = useRouter();
 
@@ -330,11 +329,11 @@ const FoodListings: React.FC = () => {
       >
         <div className="flex flex-col md:flex-row h-auto md:h-48">
           {/* Image Section */}
-          <div className="relative w-full h-48 md:w-72 md:h-48">
-            {listing.imagePaths && listing.imagePaths.length > 0 ? (
+          <div className="relative w-full h-48 md:w-72 md:h-48 overflow-hidden">
+            {listing.images && listing.images.length > 0 ? (
               <ImageCarousel
-                images={listing.imagePaths}
-                onImageClick={setFullScreenImage}
+                images={listing.images}
+                onImageClick={() => {}}
               />
             ) : (
               <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
@@ -475,14 +474,6 @@ const FoodListings: React.FC = () => {
             )}
 
             {user && <DonateButton />}
-
-            {fullScreenImage && (
-              <FullScreenImage
-                src={fullScreenImage}
-                alt="Full screen image"
-                onClose={() => setFullScreenImage(null)}
-              />
-            )}
           </motion.div>
         </div>
       </div>

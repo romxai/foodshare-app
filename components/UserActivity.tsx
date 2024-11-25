@@ -210,9 +210,9 @@ const UserActivity: React.FC = () => {
         <div className="flex flex-col md:flex-row h-auto md:h-48">
           {/* Image Section */}
           <div className="relative w-full h-48 md:w-72 md:h-48">
-            {listing.imagePaths && listing.imagePaths.length > 0 ? (
+            {listing.images && listing.images.length > 0 ? (
               <ImageCarousel
-                images={listing.imagePaths}
+                images={listing.images as string[]}
                 onImageClick={() => {}}
               />
             ) : (

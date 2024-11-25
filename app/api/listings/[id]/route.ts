@@ -1,7 +1,32 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { verifyToken } from "@/lib/auth";
+import cloudinary from "@/lib/cloudinary";
 import { ObjectId } from "mongodb";
+import streamifier from 'streamifier';
+
+async function uploadToCloudinary(file: File): Promise<string> {
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: 'food-listings',
+        transformation: [
+          { width: 800, height: 800, crop: 'limit' },
+          { quality: 'auto' },
+          { fetch_format: 'auto' }
+        ]
+      },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result!.secure_url);
+      }
+    );
+
+    streamifier.createReadStream(buffer).pipe(uploadStream);
+  });
+}
 
 export async function GET(
   request: Request,
@@ -60,26 +85,23 @@ export async function PUT(
     const { db } = await connectToDatabase();
     const formData = await request.formData();
 
-    // Get existing images that weren't removed
-    const existingImages = JSON.parse(formData.get("existingImages") as string);
-
-    // Add type for newImageUrls
+    const existingImages = JSON.parse(formData.get("existingImages") as string || "[]");
     const newImageUrls: string[] = [];
 
-    // Fix the FormData.entries() iteration
-    const entries = Array.from(formData.entries());
-    for (const [key, value] of entries) {
-      if (key.startsWith("image") && key !== "existingImages") {
-        // Add your image upload logic here
-        // const imageUrl = await uploadImage(value as File);
-        // newImageUrls.push(imageUrl);
+    for (let i = 0; i < 5; i++) {
+      const file = formData.get(`image${i}`) as File | null;
+      if (file) {
+        try {
+          const imageUrl = await uploadToCloudinary(file);
+          newImageUrls.push(imageUrl);
+        } catch (error) {
+          console.error(`Error uploading image ${i}:`, error);
+        }
       }
     }
 
-    // Now combine the URLs
     const allImageUrls = [...existingImages, ...newImageUrls];
 
-    // Update the listing
     const updateData = {
       foodType: formData.get("foodType"),
       description: formData.get("description"),
@@ -87,7 +109,7 @@ export async function PUT(
       quantityUnit: formData.get("quantityUnit"),
       expiration: new Date(formData.get("expiration") as string),
       location: formData.get("location"),
-      imagePaths: allImageUrls,
+      images: allImageUrls,
       updatedAt: new Date(),
     };
 
