@@ -33,7 +33,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, onImageClick }) =
       } else {
         api.scrollNext();
       }
-    }, 4000);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [api, current, images.length]);

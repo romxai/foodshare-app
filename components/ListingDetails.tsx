@@ -15,6 +15,8 @@ import {
   Mail,
   Clock,
   MessageCircle,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -22,6 +24,16 @@ import { ListingDetailsSkeleton } from "@/components/ui/ListingDetailsSkeleton";
 import { useAuthGuard } from "@/utils/authGuard";
 import Footer from "@/components/Footer";
 import FullScreenImage from "@/components/FullScreenImage";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ListingDetailsProps {
   id: string;
@@ -42,6 +54,7 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -109,6 +122,26 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
         minute: "2-digit",
       }),
     };
+  };
+
+  // Add delete handler
+  const handleDelete = async () => {
+    try {
+      const response = await fetch(`/api/listings?id=${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete listing");
+      }
+
+      router.push("/listings");
+    } catch (error) {
+      console.error("Error deleting listing:", error);
+    }
   };
 
   if (isLoading) {
@@ -292,54 +325,53 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
                   </div>
 
                   <div className="flex flex-col md:flex-row gap-4">
-                    <Button
-                      className="bg-[#1C716F] hover:bg-[#065553] text-[#F9F3F0]"
-                      onClick={() => {
-                        if (seller?.email) {
-                          window.location.href = `mailto:${seller.email}`;
-                        }
-                      }}
-                      disabled={isOwner}
-                      title={isOwner ? "This is your listing" : ""}
-                    >
-                      <Mail className="mr-2 h-4 w-4" />
-                      <span className="font-['Verdana Pro Cond']">
-                        Send an Email
-                      </span>
-                    </Button>
-
-                    <Button
-                      className="bg-[#1C716F] hover:bg-[#065553] text-[#F9F3F0]"
-                      onClick={() => {
-                        if (seller?.phoneNumber && listing && seller?.name) {
-                          const formattedDate = new Date(
-                            listing.createdAt
-                          ).toLocaleDateString("en-US", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          });
-
-                          const message = `Hello *${seller.name}*,\n\nI am contacting you from FoodShare, i would love to enquire more about your listing on *${listing.foodType}*, posted on _${formattedDate}_.\n\nThank you,\n_${currentUser?.name}._`;
-
-                          const cleanPhone = seller.phoneNumber.replace(
-                            /\D/g,
-                            ""
-                          );
-                          const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
-                            message
-                          )}`;
-                          window.open(whatsappUrl, "_blank");
-                        }
-                      }}
-                      disabled={isOwner}
-                      title={isOwner ? "This is your listing" : ""}
-                    >
-                      <MessageCircle className="mr-2 h-4 w-4" />
-                      <span className="font-['Verdana Pro Cond']">
-                        Contact on WhatsApp
-                      </span>
-                    </Button>
+                    {isOwner ? (
+                      <>
+                        <Button
+                          className="bg-[#1C716F] hover:bg-[#065553] text-[#F9F3F0]"
+                          onClick={() => router.push(`/edit-listing/${id}`)}
+                        >
+                          <Edit className="mr-2 h-4 w-4" />
+                          <span className="font-['Verdana Pro Cond']">Edit Listing</span>
+                        </Button>
+                        <Button
+                          className="bg-[#ADA8B3] hover:bg-red-500 text-[#F9F3F0]"
+                          onClick={() => setDeleteDialogOpen(true)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          <span className="font-['Verdana Pro Cond']">Delete Listing</span>
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          className="bg-[#1C716F] hover:bg-[#065553] text-[#F9F3F0]"
+                          onClick={() => {
+                            if (seller?.email) {
+                              window.location.href = `mailto:${seller.email}`;
+                            }
+                          }}
+                        >
+                          <Mail className="mr-2 h-4 w-4" />
+                          <span className="font-['Verdana Pro Cond']">Send an Email</span>
+                        </Button>
+                        <Button
+                          className="bg-[#1C716F] hover:bg-[#065553] text-[#F9F3F0]"
+                          onClick={() => {
+                            if (seller?.phoneNumber && listing && seller?.name) {
+                              const formattedDate = new Date(listing.createdAt).toLocaleDateString();
+                              const message = `Hello *${seller.name}*,\n\nI am contacting you from FoodShare, i would love to enquire more about your listing on *${listing.foodType}*, posted on _${formattedDate}_.\n\nThank you,\n_${currentUser?.name}._`;
+                              const cleanPhone = seller.phoneNumber.replace(/\D/g, "");
+                              const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+                              window.open(whatsappUrl, "_blank");
+                            }
+                          }}
+                        >
+                          <MessageCircle className="mr-2 h-4 w-4" />
+                          <span className="font-['Verdana Pro Cond']">Contact on WhatsApp</span>
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -348,6 +380,31 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
         </div>
       </div>
       <Footer />
+
+      {/* Add Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="bg-[#F9F3F0] border-[#ADA8B3] border-2">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl text-[#065553] font-korolev tracking-wide">
+              Delete Listing
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-600 font-['Verdana Pro Cond']">
+              Are you sure you want to delete this listing? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-[#F9F3F0] border-[#ADA8B3] border-2 text-[#1C716F] hover:bg-[#F9F3F0] hover:border-[#065553] hover:text-[#065553] font-['Verdana Pro Cond']">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-[#1C716F] hover:bg-[#065553] text-[#F9F3F0] font-['Verdana Pro Cond']"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
