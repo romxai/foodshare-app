@@ -4,28 +4,67 @@ import { ObjectId } from "mongodb";
 import { verifyToken } from "@/lib/auth";
 import cloudinary from "@/lib/cloudinary";
 import streamifier from 'streamifier';
+import sharp from 'sharp';
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+async function compressImage(buffer: Buffer): Promise<Buffer> {
+  return sharp(buffer)
+    .resize(800, 800, {
+      fit: 'inside',
+      withoutEnlargement: true
+    })
+    .jpeg({ quality: 80 })
+    .toBuffer();
+}
 
 async function uploadToCloudinary(file: File): Promise<string> {
-  const buffer = Buffer.from(await file.arrayBuffer());
-
-  return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder: 'food-listings',
-        transformation: [
-          { width: 800, height: 800, crop: 'limit' },
-          { quality: 'auto' },
-          { fetch_format: 'auto' }
-        ]
-      },
-      (error, result) => {
-        if (error) reject(error);
-        else resolve(result!.secure_url);
-      }
-    );
-
-    streamifier.createReadStream(buffer).pipe(uploadStream);
-  });
+  try {
+    if (file.size > MAX_FILE_SIZE) {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const compressedBuffer = await compressImage(buffer);
+      
+      return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            folder: 'food-listings',
+            transformation: [
+              { quality: 'auto:good' },
+              { fetch_format: 'auto' }
+            ]
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result!.secure_url);
+          }
+        );
+        
+        streamifier.createReadStream(compressedBuffer).pipe(uploadStream);
+      });
+    } else {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            folder: 'food-listings',
+            transformation: [
+              { quality: 'auto:good' },
+              { fetch_format: 'auto' }
+            ]
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result!.secure_url);
+          }
+        );
+        
+        streamifier.createReadStream(buffer).pipe(uploadStream);
+      });
+    }
+  } catch (err) {
+    const error = err as Error;
+    throw new Error(`Failed to process image: ${error.message}`);
+  }
 }
 
 export async function GET(request: Request) {
@@ -205,17 +244,21 @@ export async function POST(request: Request) {
   try {
     const { db } = await connectToDatabase();
     const formData = await request.formData();
-
-    // Upload images to Cloudinary
     const imageUrls: string[] = [];
+
     for (let i = 0; i < 5; i++) {
       const file = formData.get(`image${i}`) as File | null;
       if (file) {
+        if (file.size > MAX_FILE_SIZE * 2) {
+          throw new Error(`Image ${i + 1} is too large. Maximum size is 10MB`);
+        }
+        
         try {
           const imageUrl = await uploadToCloudinary(file);
           imageUrls.push(imageUrl);
-        } catch (error) {
-          console.error(`Error uploading image ${i}:`, error);
+        } catch (err) {
+          const error = err as Error;
+          throw new Error(`Failed to upload image ${i + 1}: ${error.message}`);
         }
       }
     }
@@ -248,14 +291,15 @@ export async function POST(request: Request) {
       },
       { status: 201 }
     );
-  } catch (error) {
-    console.error("Error creating listing:", error);
+  } catch (err) {
+    console.error("Error creating listing:", err);
+    const error = err as Error;
     return NextResponse.json(
       {
-        error: "Internal Server Error",
-        details: error instanceof Error ? error.message : String(error),
+        error: "Failed to create listing",
+        details: error.message || "Unknown error occurred",
       },
-      { status: 500 }
+      { status: error.message?.includes('too large') ? 413 : 500 }
     );
   }
 }

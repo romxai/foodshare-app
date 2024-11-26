@@ -96,6 +96,13 @@ export default function CreateListingForm({
         return;
       }
 
+      const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+      const oversizedFiles = newImages.filter(file => file.size > MAX_SIZE);
+      if (oversizedFiles.length > 0) {
+        setError(`Some images are too large. Maximum size per image is 10MB. Large files will be automatically compressed.`);
+        // Continue with upload despite warning
+      }
+
       setFormData((prev) => ({
         ...prev,
         images: [...prev.images, ...newImages],
@@ -161,7 +168,7 @@ export default function CreateListingForm({
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Error response:", errorData);
-        throw new Error(errorData.error || "Failed to create listing");
+        throw new Error(errorData.details || "Failed to create listing");
       }
 
       const data = await response.json();
@@ -170,7 +177,11 @@ export default function CreateListingForm({
       router.push("/listings");
     } catch (err) {
       console.error("Error in handleSubmit:", err);
-      setError(err instanceof Error ? err.message : "An error occurred");
+      setError(
+        err instanceof Error 
+          ? err.message
+          : "An error occurred while creating the listing. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -419,15 +430,29 @@ export default function CreateListingForm({
                 >
                   Images (1-5)
                 </Label>
-                <Input
-                  type="file"
-                  id="images"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  multiple
-                  className="bg-[#F9F3F0] border-[#ada8b3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0"
-                  title="Maximum file size: 5MB per image"
-                />
+                <div className="relative">
+                  <Input
+                    type="file"
+                    id="images"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    multiple
+                    className="bg-transparent border-[#ada8b3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0 h-auto
+                      file:mr-4 file:py-2 file:px-4
+                      file:rounded-full file:border-0
+                      file:text-sm file:font-['Verdana Pro Cond']
+                      file:bg-transparent
+                      file:text-[#1C716F]
+                      hover:file:bg-[#ECFDED]
+                      hover:file:text-[#065553]
+                      file:transition-colors
+                      file:cursor-pointer
+                      file:my-1
+                      cursor-pointer
+                      py-[0.25rem]"
+                    title="Maximum file size: 5MB per image"
+                  />
+                </div>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {previewUrls.map((url, index) => (
                     <div key={index} className="relative">
@@ -448,6 +473,9 @@ export default function CreateListingForm({
                     </div>
                   ))}
                 </div>
+                <p className="text-sm text-gray-500">
+                  {5 - formData.images.length} image slots remaining
+                </p>
               </div>
 
               {error && <p className="text-red-500 text-sm">{error}</p>}

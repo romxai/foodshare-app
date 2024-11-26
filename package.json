@@ -63,6 +63,7 @@
     "react-resizable-panels": "^2.1.4",
     "react-virtualized-auto-sizer": "^1.0.24",
     "react-window": "^1.8.10",
+    "sharp": "^0.33.5",
     "stream": "^0.0.3",
     "streamifier": "^0.1.1",
     "tailwind-merge": "^2.5.3",

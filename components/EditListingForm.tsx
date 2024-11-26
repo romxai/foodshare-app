@@ -433,15 +433,29 @@ const EditListingForm: React.FC<EditListingFormProps> = ({
                 >
                   Images (1-5)
                 </Label>
-                <Input
-                  type="file"
-                  id="images"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  multiple
-                  disabled={existingImages.length + formData.images.length >= 5}
-                  className="bg-[#F9F3F0] border-[#ada8b3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0"
-                />
+                <div className="relative">
+                  <Input
+                    type="file"
+                    id="images"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    multiple
+                    disabled={existingImages.length + formData.images.length >= 5}
+                    className="bg-transparent border-[#ada8b3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0 h-auto
+                      file:mr-4 file:py-2 file:px-4
+                      file:rounded-full file:border-0
+                      file:text-sm file:font-['Verdana Pro Cond']
+                      file:bg-transparent
+                      file:text-[#1C716F]
+                      hover:file:bg-[#ECFDED]
+                      hover:file:text-[#065553]
+                      file:transition-colors
+                      file:cursor-pointer
+                      file:my-1
+                      cursor-pointer
+                      py-[0.25rem]"
+                  />
+                </div>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {existingImages.map((url, index) => (
                     <div key={`existing-${index}`} className="relative">

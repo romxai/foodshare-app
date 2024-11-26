@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail, Lock, User, MapPin, Phone } from "lucide-react";
+import { Mail, Lock, User, MapPin, Phone, Eye, EyeOff } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -48,6 +48,12 @@ interface FieldErrors {
   [key: string]: string;
 }
 
+interface PasswordCriteria {
+  length: boolean;
+  number: boolean;
+  special: boolean;
+}
+
 const SignupForm: React.FC = () => {
   const [alert, setAlert] = useState<Alert | null>(null);
   const [name, setName] = useState("");
@@ -59,6 +65,15 @@ const SignupForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [countryCode, setCountryCode] = useState("+91");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordCriteria, setPasswordCriteria] = useState<PasswordCriteria>({
+    length: false,
+    number: false,
+    special: false,
+  });
+  const [passwordsMatch, setPasswordsMatch] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -154,6 +169,18 @@ const SignupForm: React.FC = () => {
       // ... handle other fields
     }
     validateField(name, value);
+  };
+
+  const validatePassword = (password: string) => {
+    setPasswordCriteria({
+      length: password.length >= 8,
+      number: /\d/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    });
+  };
+
+  const checkPasswordsMatch = (confirmPwd: string) => {
+    setPasswordsMatch(password === confirmPwd);
   };
 
   return (
@@ -277,14 +304,89 @@ const SignupForm: React.FC = () => {
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="Your password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    validatePassword(e.target.value);
+                    if (confirmPassword) {
+                      checkPasswordsMatch(confirmPassword);
+                    }
+                  }}
                   required
-                  className="pl-10 bg-[#F9F3F0] border-[#ADA8B3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0 placeholder:text-gray-400 placeholder:italic font-['Verdana Pro Cond']"
+                  className="pl-10 pr-10 bg-[#F9F3F0] border-[#ADA8B3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0 placeholder:text-gray-400 placeholder:italic font-['Verdana Pro Cond']"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#1C716F] transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
               </div>
+              {password && !(passwordCriteria.length && passwordCriteria.number && passwordCriteria.special) && (
+                <div className="space-y-1 mt-2">
+                  <p className={`text-sm ${passwordCriteria.length ? 'text-green-600' : 'text-red-600'} font-['Verdana Pro Cond']`}>
+                    • Password should be at least 8 characters
+                  </p>
+                  <p className={`text-sm ${passwordCriteria.number ? 'text-green-600' : 'text-red-600'} font-['Verdana Pro Cond']`}>
+                    • Password should contain at least 1 numerical character
+                  </p>
+                  <p className={`text-sm ${passwordCriteria.special ? 'text-green-600' : 'text-red-600'} font-['Verdana Pro Cond']`}>
+                    • Password should contain at least 1 special character
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="confirmPassword"
+                className="text-[#1C716F] font-['Verdana Pro Cond']"
+              >
+                Confirm Password
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirm your password"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    checkPasswordsMatch(e.target.value);
+                  }}
+                  required
+                  className={cn(
+                    "pl-10 pr-10 bg-[#F9F3F0] border-2 text-gray-800 focus:ring-0 placeholder:text-gray-400 placeholder:italic font-['Verdana Pro Cond']",
+                    !passwordsMatch && confirmPassword
+                      ? "border-red-400 focus:border-red-400"
+                      : "border-[#ADA8B3] focus:border-[#065553]"
+                  )}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#1C716F] transition-colors"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+              {!passwordsMatch && confirmPassword && (
+                <p className="text-sm text-red-600 font-['Verdana Pro Cond']">
+                  Passwords do not match
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -322,7 +424,7 @@ const SignupForm: React.FC = () => {
             <Button
               type="submit"
               className="w-full bg-[#1C716F] hover:bg-[#065553] text-[#F9F3F0] font-['Verdana Pro Cond']"
-              disabled={loading}
+              disabled={loading || !passwordsMatch || !passwordCriteria.length || !passwordCriteria.number || !passwordCriteria.special}
             >
               {loading ? "Signing up..." : "Sign Up"}
             </Button>
