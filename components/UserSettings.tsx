@@ -310,13 +310,6 @@ const UserSettings: React.FC = () => {
     }
   };
 
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center h-screen text-white">
-        Loading...
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col min-h-screen bg-[#ECFDED]">
