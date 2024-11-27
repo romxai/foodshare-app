@@ -187,7 +187,7 @@ const SignupForm: React.FC = () => {
     <>
       <Card className="w-full max-w-md bg-[#F9F3F0] border-[#ADA8B3] border-2 shadow-[0_4px_10px_rgba(0,0,0,0.1)]">
         <CardHeader>
-          <CardTitle className="text-2xl text-[#065553] font-korolev tracking-wide">
+          <CardTitle className="text-2xl text-[#065553] font-joane font-semibold tracking-wide">
             Sign Up
           </CardTitle>
           <CardDescription className="text-gray-600 font-['Verdana Pro Cond']">
@@ -329,19 +329,42 @@ const SignupForm: React.FC = () => {
                   )}
                 </button>
               </div>
-              {password && !(passwordCriteria.length && passwordCriteria.number && passwordCriteria.special) && (
-                <div className="space-y-1 mt-2">
-                  <p className={`text-sm ${passwordCriteria.length ? 'text-green-600' : 'text-red-600'} font-['Verdana Pro Cond']`}>
-                    • Password should be at least 8 characters
-                  </p>
-                  <p className={`text-sm ${passwordCriteria.number ? 'text-green-600' : 'text-red-600'} font-['Verdana Pro Cond']`}>
-                    • Password should contain at least 1 numerical character
-                  </p>
-                  <p className={`text-sm ${passwordCriteria.special ? 'text-green-600' : 'text-red-600'} font-['Verdana Pro Cond']`}>
-                    • Password should contain at least 1 special character
-                  </p>
-                </div>
-              )}
+              {password &&
+                !(
+                  passwordCriteria.length &&
+                  passwordCriteria.number &&
+                  passwordCriteria.special
+                ) && (
+                  <div className="space-y-1 mt-2">
+                    <p
+                      className={`text-sm ${
+                        passwordCriteria.length
+                          ? "text-green-600"
+                          : "text-red-600"
+                      } font-['Verdana Pro Cond']`}
+                    >
+                      • Password should be at least 8 characters
+                    </p>
+                    <p
+                      className={`text-sm ${
+                        passwordCriteria.number
+                          ? "text-green-600"
+                          : "text-red-600"
+                      } font-['Verdana Pro Cond']`}
+                    >
+                      • Password should contain at least 1 numerical character
+                    </p>
+                    <p
+                      className={`text-sm ${
+                        passwordCriteria.special
+                          ? "text-green-600"
+                          : "text-red-600"
+                      } font-['Verdana Pro Cond']`}
+                    >
+                      • Password should contain at least 1 special character
+                    </p>
+                  </div>
+                )}
             </div>
 
             <div className="space-y-2">
@@ -424,7 +447,13 @@ const SignupForm: React.FC = () => {
             <Button
               type="submit"
               className="w-full bg-[#1C716F] hover:bg-[#065553] text-[#F9F3F0] font-['Verdana Pro Cond']"
-              disabled={loading || !passwordsMatch || !passwordCriteria.length || !passwordCriteria.number || !passwordCriteria.special}
+              disabled={
+                loading ||
+                !passwordsMatch ||
+                !passwordCriteria.length ||
+                !passwordCriteria.number ||
+                !passwordCriteria.special
+              }
             >
               {loading ? "Signing up..." : "Sign Up"}
             </Button>

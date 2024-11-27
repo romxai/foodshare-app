@@ -252,7 +252,7 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
               {/* Details Section */}
               <div className="space-y-6">
                 {/* Food Name */}
-                <h1 className="text-3xl font-[500] text-[#065553] font-korolev mb-1 tracking-wide">
+                <h1 className="text-3xl font-[500] text-[#065553] font-joane font-semibold mb-1 tracking-wide">
                   {listing.foodType}
                 </h1>
 
@@ -385,7 +385,7 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent className="bg-[#F9F3F0] border-[#ADA8B3] border-2">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl text-[#065553] font-korolev tracking-wide">
+            <AlertDialogTitle className="text-xl text-[#065553] font-joane font-semibold tracking-wide">
               Delete Listing
             </AlertDialogTitle>
             <AlertDialogDescription className="text-gray-600 font-['Verdana Pro Cond']">

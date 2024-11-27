@@ -202,7 +202,7 @@ export default function CreateListingForm({
           </Button>
 
           <div className="bg-[#F9F3F0] rounded-xl p-8 shadow-lg">
-            <h1 className="text-3xl font-[500] text-[#065553] font-korolev mb-8 tracking-wide">
+            <h1 className="text-3xl font-[500] text-[#065553] font-joane font-semibold mb-8 tracking-wide">
               Create New Food Listing
             </h1>
 

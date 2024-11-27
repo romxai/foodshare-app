@@ -359,7 +359,7 @@ const FoodListings: React.FC = () => {
               {/* Top Section */}
               <div>
                 {/* Food Name */}
-                <h3 className="text-2xl font-[500] text-emerald-600 mb-1 font-['Funnel_Sans']">
+                <h3 className="text-2xl text-emerald-600 mb-1 font-['joane'] font-semibold">
                   {listing.foodType
                     .split(" ")
                     .map(

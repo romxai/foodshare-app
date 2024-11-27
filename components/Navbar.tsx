@@ -52,7 +52,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
         <div className="flex justify-between items-center h-full">
           {/* Logo/Site Name */}
           <div
-            className="text-2xl font-bold text-[#1C716F] cursor-pointer font-korolev tracking-wide md:ml-0 ml-4"
+            className="text-2xl font-bold text-[#1C716F] cursor-pointer font-joane font-semibold tracking-wide md:ml-0 ml-4"
             onClick={() => router.push("/")}
           >
             FoodShare
@@ -103,7 +103,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
                   className="w-56 bg-[#F9F3F0] border-[#ADA8B3] border-2"
                   align="end"
                 >
-                  <DropdownMenuLabel className="font-korolev text-[#1C716F] tracking-wide">
+                  <DropdownMenuLabel className="font-joane font-semibold text-[#1C716F] tracking-wide">
                     My Account
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-[#ADA8B3]" />

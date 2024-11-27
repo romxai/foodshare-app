@@ -44,7 +44,7 @@ export const AlertPopup: React.FC<AlertPopupProps> = ({
             )}
             <div className="flex-1">
               <h3
-                className={`text-lg font-korolev tracking-wide ${
+                className={`text-lg font-joane font-semibold tracking-wide ${
                   type === "success" ? "text-[#065553]" : "text-red-600"
                 }`}
               >

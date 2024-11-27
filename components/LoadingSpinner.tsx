@@ -7,7 +7,7 @@ const LoadingSpinner: React.FC = () => {
       <div className="w-20 h-20 border-4 border-[#F9F3F0] border-t-[#1C716F] rounded-full animate-spin"></div>
 
       {/* Loading text */}
-      <p className="mt-6 text-[#065553] font-korolev text-xl tracking-wide">
+      <p className="mt-6 text-[#065553] font-joane font-semibold text-xl tracking-wide">
         Loading...
       </p>
     </div>

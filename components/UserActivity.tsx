@@ -241,7 +241,7 @@ const UserActivity: React.FC = () => {
             {/* Main Info */}
             <div>
               {/* Food Name */}
-              <h3 className="text-2xl font-[500] text-emerald-600 mb-1 font-['Funnel_Sans']">
+              <h3 className="text-2xl text-emerald-600 mb-1 font-joane font-semibold">
                 {listing.foodType
                   .split(" ")
                   .map(
@@ -332,7 +332,7 @@ const UserActivity: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             className="max-w-7xl mx-auto"
           >
-            <h1 className="text-3xl font-[500] text-[#065553] font-korolev mb-8 tracking-wide">
+            <h1 className="text-3xl font-[500] text-[#065553] font-joane font-semibold mb-8 tracking-wide">
               Your Food Listings
             </h1>
 
@@ -360,7 +360,7 @@ const UserActivity: React.FC = () => {
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent className="bg-[#F9F3F0] border-[#ADA8B3] border-2">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl text-[#065553] font-korolev tracking-wide">
+            <AlertDialogTitle className="text-xl text-[#065553] font-joane font-semibold tracking-wide">
               Are you sure?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-gray-600 font-['Verdana Pro Cond']">

@@ -59,7 +59,7 @@ const HomePage: React.FC = () => {
             transition={{ duration: 0.8 }}
             className="max-w-3xl mx-auto"
           >
-            <h1 className="text-4xl md:text-6xl font-korolev text-[#F9F3F0] mb-6 tracking-wide">
+            <h1 className="text-4xl md:text-6xl font-joane font-semibold font-semibold text-[#F9F3F0] mb-6 tracking-wide">
               Share Food, Share Love
             </h1>
             <p className="text-xl md:text-2xl text-[#F9F3F0] mb-8 font-['Verdana Pro Cond']">
@@ -86,7 +86,7 @@ const HomePage: React.FC = () => {
             viewport={{ once: true }}
             className="text-center"
           >
-            <h2 className="text-3xl md:text-4xl font-korolev text-[#065553] mb-6 tracking-wide">
+            <h2 className="text-3xl md:text-4xl font-joane font-semibold font-semibold text-[#065553] mb-6 tracking-wide">
               About Us
             </h2>
             <div className="space-y-6 text-gray-600 font-['Verdana Pro Cond']">
@@ -140,7 +140,7 @@ const HomePage: React.FC = () => {
             viewport={{ once: true }}
             className="text-center"
           >
-            <h2 className="text-3xl md:text-4xl font-korolev text-[#065553] mb-6 tracking-wide">
+            <h2 className="text-3xl md:text-4xl font-joane font-semibold text-[#065553] mb-6 tracking-wide">
               Our Story
             </h2>
             <div className="space-y-6 text-gray-600 font-['Verdana Pro Cond']">

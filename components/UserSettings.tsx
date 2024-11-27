@@ -326,7 +326,7 @@ const UserSettings: React.FC = () => {
           <div className="max-w-3xl mx-auto space-y-6">
             <Card className="bg-[#F9F3F0] shadow-lg border-[#ADA8B3] border-2">
               <CardHeader>
-                <CardTitle className="text-xl sm:text-2xl text-[#065553] font-korolev tracking-wide">
+                <CardTitle className="text-xl sm:text-2xl text-[#065553] font-joane font-semibold tracking-wide">
                   Profile Information
                 </CardTitle>
               </CardHeader>
@@ -446,7 +446,7 @@ const UserSettings: React.FC = () => {
 
             <Card className="bg-[#F9F3F0] shadow-lg border-[#ADA8B3] border-2">
               <CardHeader>
-                <CardTitle className="text-xl sm:text-2xl text-[#065553] font-korolev tracking-wide">
+                <CardTitle className="text-xl sm:text-2xl text-[#065553] font-joane font-semibold tracking-wide">
                   Update Email
                 </CardTitle>
               </CardHeader>
@@ -479,7 +479,7 @@ const UserSettings: React.FC = () => {
 
             <Card className="bg-[#F9F3F0] shadow-lg border-[#ADA8B3] border-2">
               <CardHeader>
-                <CardTitle className="text-xl sm:text-2xl text-[#065553] font-korolev tracking-wide">
+                <CardTitle className="text-xl sm:text-2xl text-[#065553] font-joane font-semibold tracking-wide">
                   Update Phone Number
                 </CardTitle>
               </CardHeader>
@@ -512,7 +512,7 @@ const UserSettings: React.FC = () => {
 
             <Card className="bg-[#F9F3F0] shadow-lg border-[#ADA8B3] border-2">
               <CardHeader>
-                <CardTitle className="text-xl sm:text-2xl text-[#065553] font-korolev tracking-wide">
+                <CardTitle className="text-xl sm:text-2xl text-[#065553] font-joane font-semibold tracking-wide">
                   Update Password
                 </CardTitle>
               </CardHeader>
@@ -579,7 +579,7 @@ const UserSettings: React.FC = () => {
       <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
         <DialogContent className="bg-[#F9F3F0] sm:max-w-[425px] max-w-[90vw] w-full border-[#ADA8B3] border-2">
           <DialogHeader>
-            <DialogTitle className="text-xl text-[#065553] font-korolev tracking-wide">
+            <DialogTitle className="text-xl text-[#065553] font-joane font-semibold tracking-wide">
               Confirm Password
             </DialogTitle>
           </DialogHeader>
@@ -610,7 +610,7 @@ const UserSettings: React.FC = () => {
       <Dialog open={isPhoneDialogOpen} onOpenChange={setIsPhoneDialogOpen}>
         <DialogContent className="bg-[#F9F3F0] sm:max-w-[425px] max-w-[90vw] w-full border-[#ADA8B3] border-2">
           <DialogHeader>
-            <DialogTitle className="text-xl text-[#065553] font-korolev tracking-wide">
+            <DialogTitle className="text-xl text-[#065553] font-joane font-semibold tracking-wide">
               Confirm Password
             </DialogTitle>
           </DialogHeader>

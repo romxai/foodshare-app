@@ -59,7 +59,7 @@ const LoginForm: React.FC = () => {
   return (
     <Card className="w-full max-w-md bg-[#F9F3F0] border-[#ADA8B3] border-2 shadow-[0_4px_10px_rgba(0,0,0,0.1)]">
       <CardHeader>
-        <CardTitle className="text-2xl text-[#065553] font-korolev tracking-wide">
+        <CardTitle className="text-2xl text-[#065553] font-joane font-semibold tracking-wide">
           Login
         </CardTitle>
         <CardDescription className="text-gray-600 font-['Verdana Pro Cond']">

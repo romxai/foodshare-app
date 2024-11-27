@@ -243,7 +243,7 @@ const EditListingForm: React.FC<EditListingFormProps> = ({
           </Button>
 
           <div className="bg-[#F9F3F0] rounded-xl p-8 shadow-lg">
-            <h1 className="text-3xl font-[500] text-[#065553] font-korolev mb-8 tracking-wide">
+            <h1 className="text-3xl font-[500] text-[#065553] font-joane font-semibold mb-8 tracking-wide">
               Edit Food Listing
             </h1>
 
@@ -440,7 +440,9 @@ const EditListingForm: React.FC<EditListingFormProps> = ({
                     accept="image/*"
                     onChange={handleImageChange}
                     multiple
-                    disabled={existingImages.length + formData.images.length >= 5}
+                    disabled={
+                      existingImages.length + formData.images.length >= 5
+                    }
                     className="bg-transparent border-[#ada8b3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0 h-auto
                       file:mr-4 file:py-2 file:px-4
                       file:rounded-full file:border-0

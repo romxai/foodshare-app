@@ -7,7 +7,9 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="space-y-4">
-            <h3 className="text-xl font-korolev tracking-wide">FoodShare</h3>
+            <h3 className="text-xl font-joane font-semibold tracking-wide">
+              FoodShare
+            </h3>
             <p className="text-sm font-['Verdana Pro Cond']">
               Making food sharing simple and accessible for everyone.
             </p>
@@ -15,42 +17,80 @@ const Footer: React.FC = () => {
 
           {/* Quick Links */}
           <div className="space-y-4">
-            <h3 className="text-xl font-korolev tracking-wide">Quick Links</h3>
+            <h3 className="text-xl font-joane font-semibold tracking-wide">
+              Quick Links
+            </h3>
             <ul className="space-y-2 font-['Verdana Pro Cond']">
               <li>
-                <a href="/" className="hover:text-[#CCD9BF] transition-colors">Home</a>
+                <a href="/" className="hover:text-[#CCD9BF] transition-colors">
+                  Home
+                </a>
               </li>
               <li>
-                <a href="/#about" className="hover:text-[#CCD9BF] transition-colors">About Us</a>
+                <a
+                  href="/#about"
+                  className="hover:text-[#CCD9BF] transition-colors"
+                >
+                  About Us
+                </a>
               </li>
               <li>
-                <a href="/listings" className="hover:text-[#CCD9BF] transition-colors">Food Listings</a>
+                <a
+                  href="/listings"
+                  className="hover:text-[#CCD9BF] transition-colors"
+                >
+                  Food Listings
+                </a>
               </li>
               <li>
-                <a href="/signup" className="hover:text-[#CCD9BF] transition-colors">Sign Up</a>
+                <a
+                  href="/signup"
+                  className="hover:text-[#CCD9BF] transition-colors"
+                >
+                  Sign Up
+                </a>
               </li>
             </ul>
           </div>
 
           {/* User Section */}
           <div className="space-y-4">
-            <h3 className="text-xl font-korolev tracking-wide">User</h3>
+            <h3 className="text-xl font-joane font-semibold tracking-wide">
+              User
+            </h3>
             <ul className="space-y-2 font-['Verdana Pro Cond']">
               <li>
-                <a href="/account" className="hover:text-[#CCD9BF] transition-colors">My Account</a>
+                <a
+                  href="/account"
+                  className="hover:text-[#CCD9BF] transition-colors"
+                >
+                  My Account
+                </a>
               </li>
               <li>
-                <a href="/settings" className="hover:text-[#CCD9BF] transition-colors">Settings</a>
+                <a
+                  href="/settings"
+                  className="hover:text-[#CCD9BF] transition-colors"
+                >
+                  Settings
+                </a>
               </li>
               <li>
-                <a href="/create-listing" className="hover:text-[#CCD9BF] transition-colors">Create Listing</a>
+                <a
+                  href="/create-listing"
+                  className="hover:text-[#CCD9BF] transition-colors"
+                >
+                  Create Listing
+                </a>
               </li>
             </ul>
           </div>
 
           {/* Social Media */}
           <div className="space-y-4">
-            <h3 className="text-xl font-korolev tracking-wide">Connect With Us</h3>
+            <h3 className="text-xl font-joane font-semibold tracking-wide">
+              Connect With Us
+            </h3>
             <div className="flex space-x-4">
               <a
                 href="https://facebook.com"
@@ -96,7 +136,9 @@ const Footer: React.FC = () => {
 
         {/* Copyright */}
         <div className="mt-12 pt-8 border-t border-[#F9F3F0] opacity-60 text-center font-['Verdana Pro Cond']">
-          <p>&copy; {new Date().getFullYear()} FoodShare. All rights reserved.</p>
+          <p>
+            &copy; {new Date().getFullYear()} FoodShare. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>
