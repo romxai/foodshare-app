@@ -241,7 +241,7 @@ const UserActivity: React.FC = () => {
             {/* Main Info */}
             <div>
               {/* Food Name */}
-              <h3 className="text-2xl text-emerald-600 mb-1 font-joane font-semibold">
+              <h3 className="text-2xl text-[#1C716F] mb-1 font-joane font-semibold">
                 {listing.foodType
                   .split(" ")
                   .map(
@@ -332,7 +332,7 @@ const UserActivity: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             className="max-w-7xl mx-auto"
           >
-            <h1 className="text-3xl font-[500] text-[#065553] font-joane font-semibold mb-8 tracking-wide">
+            <h1 className="text-3xl text-[#1C716F] font-joane font-semibold mb-8 tracking-wide">
               Your Food Listings
             </h1>
 
