@@ -56,35 +56,6 @@ const CreateListingForm = dynamic(
   { ssr: false }
 );
 
-const DonateButton = () => {
-  const [isDonateButtonHovered, setIsDonateButtonHovered] = useState(false);
-  const router = useRouter();
-
-  return (
-    <motion.div
-      initial={{ width: "3.5rem" }}
-      whileHover={{
-        width: "12rem",
-        transition: { duration: 0.2 },
-      }}
-      className="fixed bottom-6 right-6 h-14 shadow-lg bg-emerald-600 hover:bg-emerald-700 rounded-full flex items-center justify-end overflow-hidden group cursor-pointer"
-      onMouseEnter={() => setIsDonateButtonHovered(true)}
-      onMouseLeave={() => setIsDonateButtonHovered(false)}
-      onClick={() => router.push("/create-listing")}
-    >
-      <span className="text-white font-medium absolute left-6 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-        Donate Food
-      </span>
-      <motion.div
-        className="flex items-center justify-center w-14 relative"
-        animate={{ rotate: isDonateButtonHovered ? 90 : 0 }}
-        transition={{ duration: 0.2 }}
-      >
-        <Plus className="h-6 w-6 text-white" />
-      </motion.div>
-    </motion.div>
-  );
-};
 
 const FoodListings: React.FC = () => {
   useAuthGuard();
@@ -473,7 +444,6 @@ const FoodListings: React.FC = () => {
               </>
             )}
 
-            {user && <DonateButton />}
           </motion.div>
         </div>
       </div>

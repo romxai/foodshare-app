@@ -263,7 +263,8 @@ export default function CreateListingForm({
                     />
                   </div>
                 </div>
-                <div className="flex-1 space-y-2">
+
+                <div className="flex-0 space-y-2">
                   <Label className="text-sm font-medium text-gray-600">
                     Unit
                   </Label>
@@ -285,9 +286,6 @@ export default function CreateListingForm({
                     ))}
                   </ToggleGroup>
                 </div>
-              </div>
-
-              <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1 space-y-2">
                   <Label
                     htmlFor="servings"
