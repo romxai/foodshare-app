@@ -287,7 +287,7 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
                             • <span className="text-[#1C716F]">Servings:</span>{" "}
                             <span className="italic">
                               {
-                                (listing as FoodListing & { servings?: number })
+                                (listing as FoodListing & { servings?: string })
                                   .servings
                               }{" "}
                               approx.
@@ -302,7 +302,7 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
                       <Clock className="h-5 w-5 mr-3 text-[#065553]" />
                       <span>
                         <span className="text-[#1C716F]">Expires on</span>{" "}
-                        <span className="italic">{`${date} at ${time}`}</span>
+                        <span className="italic">{`${date}`}</span>
                       </span>
                     </div>
 

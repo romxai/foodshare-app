@@ -186,6 +186,14 @@ const SignupForm: React.FC = () => {
   return (
     <>
       <Card className="w-full max-w-md bg-[#F9F3F0] border-[#ADA8B3] border-2 shadow-[0_4px_10px_rgba(0,0,0,0.1)]">
+        {/* X Button */}
+        <button
+          onClick={() => router.push("/")}
+          className="absolute top-2 right-2 text-[#1C716F] hover:text-[#065553] p-2 focus:outline-none"
+          aria-label="Close and go to homepage"
+        >
+          ✕
+        </button>
         <CardHeader>
           <CardTitle className="text-2xl text-[#065553] font-joane font-semibold tracking-wide">
             Sign Up

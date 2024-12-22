@@ -40,7 +40,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
 
   const handleDonateClick = () => {
     if (user) {
-      router.push("/listings");
+      router.push("/create-listing");
     } else {
       router.push("/login");
     }
@@ -55,11 +55,12 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
             className="text-2xl font-bold text-[#1C716F] cursor-pointer font-joane font-semibold tracking-wide md:ml-0 ml-4"
             onClick={() => router.push("/")}
           >
-            FoodShare
+            The Giving Table
           </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
+
             {/* Donate Food Button */}
             <Button
               variant="ghost"
@@ -68,6 +69,15 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
             >
               <Heart className="h-4 w-4 mr-1" />
               Donate Food!
+            </Button>
+
+            {/* Food Listing Button */}
+            <Button
+              variant="ghost"
+              className="flex items-center space-x-2 text-[#1C716F] hover:text-[#065553] transition-colors font-['Verdana Pro Cond']"
+              onClick={() => router.push("/listings")}
+            >
+              Food Listing
             </Button>
 
             {/* About Us Button */}

@@ -1,6 +1,6 @@
 export const metadata = {
-  title: 'Account - FoodShare',
-  description: 'Your account activity on FoodShare',
+  title: 'Account - The Giving Table',
+  description: 'Your account activity on The Giving Table',
 }
 
 export default function AccountLayout({

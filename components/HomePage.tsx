@@ -91,7 +91,7 @@ const HomePage: React.FC = () => {
             </h2>
             <div className="space-y-6 text-gray-600 font-['Verdana Pro Cond']">
               <p className="text-lg">
-                Welcome to FoodShare, a heartfelt initiative founded by Ishaan
+                Welcome to The Giving Table, a heartfelt initiative founded by Ishaan
                 Taparia, a 17-year-old passionate cook and change-maker from
                 Mumbai.
               </p>
@@ -106,7 +106,7 @@ const HomePage: React.FC = () => {
               </p>
               <p className="text-lg">
                 At 16, this realization became a turning point. I knew I had to
-                act. A year later, FoodShare was born with a mission to bridge the
+                act. A year later, The Giving Table was born with a mission to bridge the
                 gap between surplus and scarcity. Our platform is dedicated to
                 redistributing leftover food from homes, events, and restaurants to
                 those in need.
@@ -161,7 +161,7 @@ const HomePage: React.FC = () => {
               </p>
               <p className="text-lg">
                 That's when the idea for this platform began. At 17, I decided to
-                take action. I created FoodShare, a space where leftover food could
+                take action. I created The Giving Table, a space where leftover food could
                 be given a second chance—redistributed to people who need it most.
               </p>
               <p className="text-lg">

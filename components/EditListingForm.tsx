@@ -383,25 +383,6 @@ const EditListingForm: React.FC<EditListingFormProps> = ({
                     </PopoverContent>
                   </Popover>
                 </div>
-
-                <div className="flex-1 space-y-2">
-                  <Label
-                    htmlFor="expirationTime"
-                    className="text-sm font-medium text-gray-600"
-                  >
-                    Expiration Time
-                  </Label>
-                  <TimePicker
-                    value={formData.expirationTime}
-                    onChange={(time) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        expirationTime: time,
-                      }))
-                    }
-                    showIcon={false}
-                  />
-                </div>
               </div>
 
               <div className="space-y-2">

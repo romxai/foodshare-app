@@ -53,7 +53,6 @@ export default function CreateListingForm({
     quantity: "",
     quantityUnit: "Kg",
     servings: "",
-    source: "",
     expirationDate: "",
     expirationTime: "00:00",
     location: "",
@@ -143,7 +142,7 @@ export default function CreateListingForm({
 
       const formDataToSend = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
-        if (key === "servings" || key === "quantity") {
+        if (key === "quantity") {
           formDataToSend.append(key, parseFloat(value as string).toString());
         } else if (key !== "images") {
           formDataToSend.append(key, value as string);
@@ -301,9 +300,7 @@ export default function CreateListingForm({
                     <Input
                       id="servings"
                       name="servings"
-                      type="number"
-                      step="0.01"
-                      min="0"
+                      type="string"
                       value={formData.servings}
                       onChange={handleChange}
                       required
@@ -311,23 +308,6 @@ export default function CreateListingForm({
                     />
                   </div>
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label
-                  htmlFor="source"
-                  className="text-sm font-medium text-gray-600"
-                >
-                  Source
-                </Label>
-                <Input
-                  id="source"
-                  name="source"
-                  value={formData.source}
-                  onChange={handleChange}
-                  required
-                  className="bg-[#F9F3F0] border-[#ada8b3] border-2 text-gray-800 focus:border-[#065553] focus:ring-0"
-                />
               </div>
 
               <div className="flex flex-col md:flex-row gap-4">
@@ -380,25 +360,6 @@ export default function CreateListingForm({
                     </PopoverContent>
                   </Popover>
                 </div>
-
-                <div className="flex-1 space-y-2">
-                  <Label
-                    htmlFor="expirationTime"
-                    className="text-sm font-medium text-gray-600"
-                  >
-                    Expiry Time
-                  </Label>
-                  <TimePicker
-                    value={formData.expirationTime}
-                    onChange={(time) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        expirationTime: time,
-                      }))
-                    }
-                    showIcon={false}
-                  />
-                </div>
               </div>
 
               <div className="space-y-2">
@@ -441,8 +402,8 @@ export default function CreateListingForm({
                       file:mr-4 file:py-2 file:px-4
                       file:rounded-full file:border-0
                       file:text-sm file:font-['Verdana Pro Cond']
-                      file:bg-transparent
-                      file:text-[#1C716F]
+                      file:bg-[#065553]
+                      file:text-[#ECFDED]
                       hover:file:bg-[#ECFDED]
                       hover:file:text-[#065553]
                       file:transition-colors

@@ -3,7 +3,7 @@ import "@/app/globals.css";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "FoodShare App",
+  title: "The Giving Table App",
   description: "A platform for sharing surplus food",
 };
 

@@ -8,7 +8,7 @@ const Footer: React.FC = () => {
           {/* Company Info */}
           <div className="space-y-4">
             <h3 className="text-xl font-joane font-semibold tracking-wide">
-              FoodShare
+              The Giving Table
             </h3>
             <p className="text-sm font-['Verdana Pro Cond']">
               Making food sharing simple and accessible for everyone.
@@ -93,22 +93,6 @@ const Footer: React.FC = () => {
             </h3>
             <div className="flex space-x-4">
               <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-[#CCD9BF] transition-colors"
-              >
-                <Facebook className="h-6 w-6" />
-              </a>
-              <a
-                href="https://twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-[#CCD9BF] transition-colors"
-              >
-                <Twitter className="h-6 w-6" />
-              </a>
-              <a
                 href="https://instagram.com"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -117,15 +101,7 @@ const Footer: React.FC = () => {
                 <Instagram className="h-6 w-6" />
               </a>
               <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-[#CCD9BF] transition-colors"
-              >
-                <Linkedin className="h-6 w-6" />
-              </a>
-              <a
-                href="mailto:contact@foodshare.com"
+                href="mailto:contact@thegivingtable.com"
                 className="hover:text-[#CCD9BF] transition-colors"
               >
                 <Mail className="h-6 w-6" />
@@ -137,7 +113,8 @@ const Footer: React.FC = () => {
         {/* Copyright */}
         <div className="mt-12 pt-8 border-t border-[#F9F3F0] opacity-60 text-center font-['Verdana Pro Cond']">
           <p>
-            &copy; {new Date().getFullYear()} FoodShare. All rights reserved.
+            &copy; {new Date().getFullYear()} The Giving Table. All rights
+            reserved.
           </p>
         </div>
       </div>

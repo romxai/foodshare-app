@@ -1,6 +1,6 @@
 export const metadata = {
-  title: 'Sign Up - FoodShare',
-  description: 'Create an account on FoodShare',
+  title: 'Sign Up - The Giving Table',
+  description: 'Create an account on The Giving Table',
 }
 
 export default function SignupLayout({

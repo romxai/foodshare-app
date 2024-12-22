@@ -20,7 +20,7 @@ const foodListingSchema = new mongoose.Schema(
       required: true,
     },
     servings: {
-      type: Number,
+      type: String,
       required: true,
     },
     expiration: {
