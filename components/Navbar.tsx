@@ -55,12 +55,15 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
             className="text-2xl font-bold text-[#1C716F] cursor-pointer font-joane font-semibold tracking-wide md:ml-0 ml-4"
             onClick={() => router.push("/")}
           >
-            The Giving Table
+            <img
+              src="images/logo-removebg-preview.png"
+              alt="The Giving Table Logo"
+              className="h-8 md:h-10"
+            />
           </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-
             {/* Donate Food Button */}
             <Button
               variant="ghost"
