@@ -58,7 +58,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
             <img
               src="images/logo-removebg-preview.png"
               alt="The Giving Table Logo"
-              className="h-8 md:h-10"
+              className="h-14 md:h-14"
             />
           </div>
 
