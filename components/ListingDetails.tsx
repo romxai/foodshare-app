@@ -360,7 +360,7 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
                           onClick={() => {
                             if (seller?.phoneNumber && listing && seller?.name) {
                               const formattedDate = new Date(listing.createdAt).toLocaleDateString();
-                              const message = `Hello *${seller.name}*,\n\nI am contacting you from FoodShare, i would love to enquire more about your listing on *${listing.foodType}*, posted on _${formattedDate}_.\n\nThank you,\n_${currentUser?.name}._`;
+                              const message = `Hello *${seller.name}*,\n\nI am contacting you from The Giving Table, i would love to enquire more about your listing on *${listing.foodType}*, posted on _${formattedDate}_.\n\nThank you,\n_${currentUser?.name}._`;
                               const cleanPhone = seller.phoneNumber.replace(/\D/g, "");
                               const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
                               window.open(whatsappUrl, "_blank");
