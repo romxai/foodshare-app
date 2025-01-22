@@ -56,7 +56,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
             className="text-2xl font-bold text-[#1C716F] cursor-pointer font-korolev tracking-wide md:ml-0 ml-4"
             onClick={() => router.push("/")}
           >
-            FoodShare
+            The Giving Table
           </div>
 
           {/* Desktop Navigation */}

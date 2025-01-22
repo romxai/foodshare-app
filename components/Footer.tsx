@@ -7,7 +7,7 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="space-y-4">
-            <h3 className="text-xl font-korolev tracking-wide">FoodShare</h3>
+            <h3 className="text-xl font-korolev tracking-wide">The Giving Table</h3>
             <p className="text-sm font-['Verdana Pro Cond']">
               Making food sharing simple and accessible for everyone.
             </p>
@@ -96,7 +96,7 @@ const Footer: React.FC = () => {
 
         {/* Copyright */}
         <div className="mt-12 pt-8 border-t border-[#F9F3F0] opacity-60 text-center font-['Verdana Pro Cond']">
-          <p>&copy; {new Date().getFullYear()} FoodShare. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} The Giving Table. All rights reserved.</p>
         </div>
       </div>
     </footer>

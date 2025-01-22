@@ -279,7 +279,7 @@ const ListingDetails: React.FC<ListingDetailsProps> = ({ id }) => {
                             day: "numeric",
                           });
 
-                          const message = `Hello *${seller.name}*,\n\nI am contacting you from FoodShare, i would love to enquire more about your listing on *${listing.foodType}*, posted on _${formattedDate}_.\n\nThank you,\n_${currentUser?.name}._`;
+                          const message = `Hello *${seller.name}*,\n\nI am contacting you from The Giving Table, i would love to enquire more about your listing on *${listing.foodType}*, posted on _${formattedDate}_.\n\nThank you,\n_${currentUser?.name}._`;
 
                           const cleanPhone = seller.phoneNumber.replace(
                             /\D/g,

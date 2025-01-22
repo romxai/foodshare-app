@@ -94,10 +94,10 @@ const HomePage: React.FC = () => {
                 Welcome to the Giving Table, an initiative founded by Ishaan Taparia, a 17-year-old in Mumbai. We believe that every meal has the potential to make a difference in someone's life.
               </p>
               <p className="text-lg">
-                Our mission is to create a sustainable and compassionate food sharing ecosystem where surplus food finds its way to those who need it most. Whether you're a restaurant with extra meals, a home cook with leftovers, or someone looking to help your community, FoodShare provides a platform to make that connection.
+                Our mission is to create a sustainable and compassionate food sharing ecosystem where surplus food finds its way to those who need it most. Whether you're a restaurant with extra meals, a home cook with leftovers, or someone looking to help your community, The Giving Table provides a platform to make that connection.
               </p>
               <p className="text-lg">
-                This realization soon became a turning point. FoodShare serves as a testament to the power of community action. Our platform has facilitated countless connections, prevented tons of food waste, and helped nurture a more sustainable and caring society.
+                This realization soon became a turning point. The Giving Table serves as a testament to the power of community action. Our platform has facilitated countless connections, prevented tons of food waste, and helped nurture a more sustainable and caring society.
               </p>
               <p className="text-lg">
                 We continue to grow and evolve, driven by our commitment to making sharing as simple and accessible as possible. Every shared meal represents a step towards our vision of a world where food brings people together and never goes to waste.
@@ -122,13 +122,13 @@ const HomePage: React.FC = () => {
             </h2>
             <div className="space-y-6 text-gray-600 font-['Verdana Pro Cond']">
               <p className="text-lg">
-                FoodShare began with a simple observation: while some had surplus food that would go to waste, others in our community were in need. This realization sparked the idea for a platform that could bridge this gap.
+                The Giving Table began with a simple observation: while some had surplus food that would go to waste, others in our community were in need. This realization sparked the idea for a platform that could bridge this gap.
               </p>
               <p className="text-lg">
                 Founded in 2024, our journey started in Mumbai, where we witnessed firsthand the disconnect between food surplus and scarcity. What began as a small local initiative has grown into a vibrant community of food-sharing enthusiasts.
               </p>
               <p className="text-lg">
-                Today, FoodShare serves as a testament to the power of community action. Our platform has facilitated countless connections, prevented tons of food waste, and helped nurture a more sustainable and caring society.
+                Today, The Giving Table serves as a testament to the power of community action. Our platform has facilitated countless connections, prevented tons of food waste, and helped nurture a more sustainable and caring society.
               </p>
               <p className="text-lg">
                 We continue to grow and evolve, driven by our commitment to making food sharing as simple and accessible as possible. Every shared meal represents a step towards our vision of a world where food brings people together and never goes to waste.
