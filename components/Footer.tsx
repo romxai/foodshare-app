@@ -1,4 +1,11 @@
-import { Facebook, Twitter, Instagram, Linkedin, Mail } from "lucide-react";
+import {
+  Facebook,
+  Twitter,
+  Instagram,
+  Linkedin,
+  Mail,
+  Phone,
+} from "lucide-react";
 
 const Footer: React.FC = () => {
   return (
@@ -91,25 +98,27 @@ const Footer: React.FC = () => {
             <h3 className="text-xl font-joane font-semibold tracking-wide">
               Connect With Us
             </h3>
-            <div className="flex space-x-4">
+            <div className="space-y-2">
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/thegivingtable_in/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-[#CCD9BF] transition-colors"
+                className="flex items-center space-x-2 hover:text-[#CCD9BF] transition-colors"
               >
                 <Instagram className="h-6 w-6" />
+                <span>thegivingtable_in</span>
               </a>
               <a
-                href="mailto:contact@thegivingtable.com"
-                className="hover:text-[#CCD9BF] transition-colors"
+                href="tel:+919820302991"
+                className="flex items-center space-x-2 hover:text-[#CCD9BF] transition-colors"
               >
-                <Mail className="h-6 w-6" />
+                <Phone className="h-6 w-6" />
+                <span>+91 9820302991</span>
               </a>
             </div>
           </div>
-        </div>
-
+        </div>{" "}
+        {/* <-- Fixed missing closing div here */}
         {/* Copyright */}
         <div className="mt-12 pt-8 border-t border-[#F9F3F0] opacity-60 text-center font-['Verdana Pro Cond']">
           <p>
@@ -122,4 +131,4 @@ const Footer: React.FC = () => {
   );
 };
 
-export default Footer; 
+export default Footer;
